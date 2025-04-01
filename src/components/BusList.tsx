@@ -1,0 +1,114 @@
+
+import React, { useState } from 'react';
+import { Bus } from '../types';
+import BusCard from './BusCard';
+import { Filter } from 'lucide-react';
+
+interface BusListProps {
+  buses: Bus[];
+  journeyDate: string;
+}
+
+const BusList: React.FC<BusListProps> = ({ buses, journeyDate }) => {
+  const [filters, setFilters] = useState({
+    ac: false,
+    nonAc: false,
+    sleeper: false,
+    seater: false,
+  });
+  
+  const toggleFilter = (filterName: keyof typeof filters) => {
+    setFilters(prev => ({
+      ...prev,
+      [filterName]: !prev[filterName]
+    }));
+  };
+  
+  const filteredBuses = buses.filter(bus => {
+    // If no filters are active, show all buses
+    if (!filters.ac && !filters.nonAc && !filters.sleeper && !filters.seater) {
+      return true;
+    }
+    
+    // Apply AC/Non-AC filter
+    if (filters.ac && bus.type !== 'AC') {
+      return false;
+    }
+    if (filters.nonAc && bus.type !== 'Non-AC') {
+      return false;
+    }
+    
+    // Apply Sleeper/Seater filter
+    if (filters.sleeper && bus.category !== 'Sleeper') {
+      return false;
+    }
+    if (filters.seater && bus.category !== 'Seater') {
+      return false;
+    }
+    
+    return true;
+  });
+
+  return (
+    <div className="animate-fade-in">
+      <div className="flex flex-wrap justify-between items-center mb-6">
+        <h2 className="text-2xl font-serif">{buses.length} Buses Found</h2>
+        <div className="flex flex-wrap gap-2 items-center">
+          <span className="flex items-center">
+            <Filter className="h-4 w-4 mr-2" /> Filters:
+          </span>
+          <button
+            className={`px-3 py-1 text-sm rounded-full border ${
+              filters.ac ? 'bg-far-green text-white' : 'border-far-gray bg-white'
+            }`}
+            onClick={() => toggleFilter('ac')}
+          >
+            AC
+          </button>
+          <button
+            className={`px-3 py-1 text-sm rounded-full border ${
+              filters.nonAc ? 'bg-far-green text-white' : 'border-far-gray bg-white'
+            }`}
+            onClick={() => toggleFilter('nonAc')}
+          >
+            Non-AC
+          </button>
+          <button
+            className={`px-3 py-1 text-sm rounded-full border ${
+              filters.sleeper ? 'bg-far-green text-white' : 'border-far-gray bg-white'
+            }`}
+            onClick={() => toggleFilter('sleeper')}
+          >
+            Sleeper
+          </button>
+          <button
+            className={`px-3 py-1 text-sm rounded-full border ${
+              filters.seater ? 'bg-far-green text-white' : 'border-far-gray bg-white'
+            }`}
+            onClick={() => toggleFilter('seater')}
+          >
+            Seater
+          </button>
+        </div>
+      </div>
+      
+      {filteredBuses.length === 0 ? (
+        <div className="card text-center py-10">
+          <p className="text-lg font-medium">No buses found matching your filters.</p>
+          <button 
+            className="btn-outline mt-4"
+            onClick={() => setFilters({ac: false, nonAc: false, sleeper: false, seater: false})}
+          >
+            Clear Filters
+          </button>
+        </div>
+      ) : (
+        filteredBuses.map(bus => (
+          <BusCard key={bus.id} bus={bus} journeyDate={journeyDate} />
+        ))
+      )}
+    </div>
+  );
+};
+
+export default BusList;
