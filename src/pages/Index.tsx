@@ -28,12 +28,13 @@ const Index = () => {
                 </Link>
               </div>
             </div>
-            <div className="order-1 md:order-2">
-              <img 
-                src="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=2669&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" 
-                alt="Bus Travel" 
-                className="rounded-lg shadow-lg w-full h-64 md:h-96 object-cover"
-              />
+            <div className="order-1 md:order-2 flex items-center justify-center">
+              <div className="text-5xl md:text-7xl font-bold text-far-black transform rotate-[-5deg]" style={{
+                textShadow: "3px 3px 0 #4a5d23, 6px 6px 0 rgba(0,0,0,0.2)",
+                letterSpacing: "-1px"
+              }}>
+                7.9% <span className="block md:mt-2">FLAT DISCOUNT</span>
+              </div>
             </div>
           </div>
         </div>
