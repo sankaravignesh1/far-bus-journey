@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, Bus } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -12,9 +12,9 @@ const Navbar = () => {
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2">
             <img
-              src="/public/lovable-uploads/567c0d7a-923f-4770-99f7-143d16d26b7b.png"
+              src="/lovable-uploads/3cddaaad-8c4a-48a0-a732-f43f1af4ad93.png"
               alt="FAR Logo"
-              className="h-12 w-auto"
+              className="h-10 w-auto"
             />
           </Link>
           
