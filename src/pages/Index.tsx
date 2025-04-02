@@ -1,24 +1,16 @@
-
 import React from 'react';
 import Layout from '../components/Layout';
 import SearchForm from '../components/SearchForm';
 import { Bus, Truck, Filter, MapPin, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
 const Index = () => {
-  return (
-    <Layout>
+  return <Layout>
       <section className="bg-far-cream py-16">
         <div className="container-custom">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             <div className="order-2 md:order-1">
-              <h1 className="text-4xl md:text-5xl font-serif mb-6">
-                Your Journey, Our Responsibility
-              </h1>
-              <p className="text-lg mb-8 text-far-black/80">
-                Search, book, and manage your intercity bus travel with ease. 
-                Enjoy comfortable seating options, real-time tracking, and hassle-free booking.
-              </p>
+              
+              <p className="text-lg mb-8 text-far-black/80">Search, book, and manage your bus travel with ease. Enjoy 7.9% flat discount on every booking.</p>
               <div className="flex flex-wrap gap-4">
                 <a href="#search" className="btn-primary">
                   Book Now
@@ -30,9 +22,9 @@ const Index = () => {
             </div>
             <div className="order-1 md:order-2 flex items-center justify-center">
               <div className="text-5xl md:text-7xl font-bold text-far-black transform rotate-[-5deg]" style={{
-                textShadow: "3px 3px 0 #4a5d23, 6px 6px 0 rgba(0,0,0,0.2)",
-                letterSpacing: "-1px"
-              }}>
+              textShadow: "3px 3px 0 #4a5d23, 6px 6px 0 rgba(0,0,0,0.2)",
+              letterSpacing: "-1px"
+            }}>
                 7.9% <span className="block md:mt-2">FLAT DISCOUNT</span>
               </div>
             </div>
@@ -110,8 +102,6 @@ const Index = () => {
           </div>
         </div>
       </section>
-    </Layout>
-  );
+    </Layout>;
 };
-
 export default Index;
