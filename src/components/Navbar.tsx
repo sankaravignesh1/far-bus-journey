@@ -12,7 +12,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2">
             <img
-              src="/lovable-uploads/3cddaaad-8c4a-48a0-a732-f43f1af4ad93.png"
+              src="/lovable-uploads/ac7201ae-197c-46b6-9ff1-5805df5d326e.png"
               alt="FAR Logo"
               className="h-10 w-auto"
             />
