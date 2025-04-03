@@ -1,13 +1,11 @@
-
 import React from 'react';
 import Layout from '../components/Layout';
 import SearchForm from '../components/SearchForm';
 import { Link } from 'react-router-dom';
 import { Bus, Globe, Ticket } from 'lucide-react';
-
 const Index = () => {
   return <Layout>
-      <section className="bg-far-cream py-16">
+      <section className="bg-far-cream py-[40px]">
         <div className="container-custom">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             <div className="order-2 md:order-1">
@@ -19,8 +17,8 @@ const Index = () => {
               </p>
               
               {/* Discount Banner */}
-              <div className="inline-block bg-far-green text-white px-4 py-2 rounded-md mb-6 transform -rotate-2 shadow-lg">
-                <span className="font-bold">Flat 7.9% Off - Forever</span>
+              <div className="inline-block text-white px-4 py-2 rounded-md mb-6 transform -rotate-2 shadow-lg bg-zinc-700">
+                <span className="font-bold text-xl">Flat 7.9% Off - Forever</span>
               </div>
               
               <div className="flex flex-wrap gap-4">
@@ -32,19 +30,12 @@ const Index = () => {
                 </Link>
               </div>
             </div>
-            <div className="order-1 md:order-2 flex items-center justify-center">
-              <div className="text-5xl md:text-7xl font-bold text-far-black transform rotate-[-5deg]" style={{
-              textShadow: "3px 3px 0 #4a5d23, 6px 6px 0 rgba(0,0,0,0.2)",
-              letterSpacing: "-1px"
-            }}>
-                7.9% <span className="block md:mt-2">FLAT DISCOUNT</span>
-              </div>
-            </div>
+            
           </div>
         </div>
       </section>
 
-      <section className="py-16" id="search">
+      <section id="search" className="py-[40px]">
         <div className="container-custom max-w-3xl">
           <SearchForm />
         </div>
