@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Search, MapPin, ArrowRight, Print, Bus } from 'lucide-react';
+import { Calendar, Search, MapPin, ArrowRight, Printer, Bus } from 'lucide-react';
 import { cities } from '../data/mockData';
 
 const TabTypes = {
@@ -211,7 +211,7 @@ const SearchForm = () => {
               >
                 {activeTab === TabTypes.PRINT ? (
                   <>
-                    <Print className="h-5 w-5 mr-2" />
+                    <Printer className="h-5 w-5 mr-2" />
                     Print Ticket
                   </>
                 ) : (

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import Layout from '../components/Layout';
 import { useLocation } from 'react-router-dom';
-import { Print } from 'lucide-react';
+import { Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from "@/hooks/use-toast";
 
@@ -104,7 +104,7 @@ const PrintTicket = () => {
             <div className="border-b pb-4 mb-4 flex items-center justify-between">
               <h2 className="text-xl font-bold">Ticket Details</h2>
               <Button onClick={printTicket} className="print:hidden">
-                <Print className="h-4 w-4 mr-2" /> Print
+                <Printer className="h-4 w-4 mr-2" /> Print
               </Button>
             </div>
             
