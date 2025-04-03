@@ -2,6 +2,12 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -20,10 +26,36 @@ const Navbar = () => {
           
           {/* Desktop menu */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link to="/" className="font-medium hover:text-far-green transition-colors">Search & Book</Link>
-            <Link to="/manage" className="font-medium hover:text-far-green transition-colors">Manage Ticket</Link>
-            <Link to="/print-ticket" className="font-medium hover:text-far-green transition-colors">Print Ticket</Link>
-            <Link to="/track" className="font-medium hover:text-far-green transition-colors">Track Bus</Link>
+            <Link to="/" className="font-medium hover:text-far-green transition-colors">Home</Link>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger className="font-medium hover:text-far-green transition-colors focus:outline-none">
+                Manage Ticket
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-white">
+                <DropdownMenuItem asChild>
+                  <Link to="/print-ticket" className="w-full">Print Ticket</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/cancel-ticket" className="w-full">Cancel Ticket</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/track" className="w-full">Track Bus</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/download-ticket" className="w-full">Download Ticket</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/send-ticket" className="w-full">Send SMS / Email</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/reschedule-ticket" className="w-full">Reschedule Ticket</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/check-refund" className="w-full">Check Refund Status</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           
           {/* Mobile menu button */}
@@ -50,29 +82,62 @@ const Navbar = () => {
                 className="block font-medium hover:text-far-green py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Search & Book
+                Home
               </Link>
-              <Link 
-                to="/manage"
-                className="block font-medium hover:text-far-green py-2"
-                onClick={() => setIsMenuOpen(false)}
-              >
+              <div className="block font-medium hover:text-far-green py-2">
                 Manage Ticket
-              </Link>
-              <Link 
-                to="/print-ticket"
-                className="block font-medium hover:text-far-green py-2"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Print Ticket
-              </Link>
-              <Link 
-                to="/track"
-                className="block font-medium hover:text-far-green py-2"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Track Bus
-              </Link>
+              </div>
+              <div className="pl-4 space-y-2">
+                <Link 
+                  to="/print-ticket"
+                  className="block text-sm hover:text-far-green py-1"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Print Ticket
+                </Link>
+                <Link 
+                  to="/cancel-ticket"
+                  className="block text-sm hover:text-far-green py-1"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Cancel Ticket
+                </Link>
+                <Link 
+                  to="/track"
+                  className="block text-sm hover:text-far-green py-1"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Track Bus
+                </Link>
+                <Link 
+                  to="/download-ticket"
+                  className="block text-sm hover:text-far-green py-1"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Download Ticket
+                </Link>
+                <Link 
+                  to="/send-ticket"
+                  className="block text-sm hover:text-far-green py-1"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Send SMS / Email
+                </Link>
+                <Link 
+                  to="/reschedule-ticket"
+                  className="block text-sm hover:text-far-green py-1"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Reschedule Ticket
+                </Link>
+                <Link 
+                  to="/check-refund"
+                  className="block text-sm hover:text-far-green py-1"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Check Refund Status
+                </Link>
+              </div>
             </div>
           </div>
         )}
