@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Bus } from '../types';
 import BusCard from './BusCard';
-import { Filter } from 'lucide-react';
+import { Filter, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface BusListProps {
   buses: Bus[];
@@ -18,11 +18,23 @@ const BusList: React.FC<BusListProps> = ({ buses, journeyDate }) => {
     singleSeats: false,
   });
   
+  const [showFilters, setShowFilters] = useState(false);
+  
   const toggleFilter = (filterName: keyof typeof filters) => {
     setFilters(prev => ({
       ...prev,
       [filterName]: !prev[filterName]
     }));
+  };
+  
+  const clearFilters = () => {
+    setFilters({
+      ac: false,
+      nonAc: false,
+      sleeper: false,
+      seater: false,
+      singleSeats: false,
+    });
   };
   
   const filteredBuses = buses.filter(bus => {
@@ -31,89 +43,107 @@ const BusList: React.FC<BusListProps> = ({ buses, journeyDate }) => {
       return true;
     }
     
-    let matchesFilter = false;
-    
     // Apply AC/Non-AC filter
-    if (filters.ac && bus.type === 'AC') {
-      matchesFilter = true;
-    }
-    if (filters.nonAc && bus.type === 'Non-AC') {
-      matchesFilter = true;
-    }
+    const typeMatch = 
+      (filters.ac && bus.type === 'AC') || 
+      (filters.nonAc && bus.type === 'Non-AC') || 
+      (!filters.ac && !filters.nonAc);
     
     // Apply Sleeper/Seater filter
-    if (filters.sleeper && bus.category === 'Sleeper') {
-      matchesFilter = true;
-    }
-    if (filters.seater && bus.category === 'Seater') {
-      matchesFilter = true;
-    }
+    const categoryMatch = 
+      (filters.sleeper && bus.category === 'Sleeper') || 
+      (filters.seater && bus.category === 'Seater') || 
+      (!filters.sleeper && !filters.seater);
     
     // Apply Single Seats filter
-    if (filters.singleSeats && bus.singleSeats > 0) {
-      matchesFilter = true;
-    }
+    const singleSeatsMatch = 
+      (filters.singleSeats && bus.singleSeats > 0) || 
+      !filters.singleSeats;
     
-    return matchesFilter;
+    return typeMatch && categoryMatch && singleSeatsMatch;
   });
 
   return (
     <div className="animate-fade-in">
       <div className="flex flex-wrap justify-between items-center mb-6">
         <h2 className="text-2xl font-serif">{buses.length} Buses Found</h2>
-        <div className="flex flex-wrap gap-2 items-center">
-          <span className="flex items-center">
-            <Filter className="h-4 w-4 mr-2" /> Filters:
-          </span>
-          <button
-            className={`px-3 py-1 text-sm rounded-full border ${
-              filters.ac ? 'bg-far-black text-far-cream' : 'border-far-gray bg-white'
-            }`}
-            onClick={() => toggleFilter('ac')}
-          >
-            AC
-          </button>
-          <button
-            className={`px-3 py-1 text-sm rounded-full border ${
-              filters.nonAc ? 'bg-far-black text-far-cream' : 'border-far-gray bg-white'
-            }`}
-            onClick={() => toggleFilter('nonAc')}
-          >
-            Non-AC
-          </button>
-          <button
-            className={`px-3 py-1 text-sm rounded-full border ${
-              filters.sleeper ? 'bg-far-black text-far-cream' : 'border-far-gray bg-white'
-            }`}
-            onClick={() => toggleFilter('sleeper')}
-          >
-            Sleeper
-          </button>
-          <button
-            className={`px-3 py-1 text-sm rounded-full border ${
-              filters.seater ? 'bg-far-black text-far-cream' : 'border-far-gray bg-white'
-            }`}
-            onClick={() => toggleFilter('seater')}
-          >
-            Seater
-          </button>
-          <button
-            className={`px-3 py-1 text-sm rounded-full border ${
-              filters.singleSeats ? 'bg-far-black text-far-cream' : 'border-far-gray bg-white'
-            }`}
-            onClick={() => toggleFilter('singleSeats')}
-          >
-            Single Seats
-          </button>
-        </div>
+        <button 
+          className="flex items-center px-4 py-2 bg-far-cream text-far-black rounded-md"
+          onClick={() => setShowFilters(!showFilters)}
+        >
+          <Filter className="h-4 w-4 mr-2" /> 
+          Filters 
+          {showFilters ? 
+            <ChevronUp className="h-4 w-4 ml-2" /> : 
+            <ChevronDown className="h-4 w-4 ml-2" />
+          }
+        </button>
       </div>
+      
+      {showFilters && (
+        <div className="bg-white p-4 rounded-lg border border-far-lightgray mb-6 animate-fade-in">
+          <h3 className="text-lg font-medium mb-3">Filter Buses</h3>
+          
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <button
+              className={`px-3 py-2 text-sm rounded-md border transition-colors ${
+                filters.ac ? 'bg-far-black text-far-cream' : 'border-far-gray bg-white'
+              }`}
+              onClick={() => toggleFilter('ac')}
+            >
+              AC
+            </button>
+            <button
+              className={`px-3 py-2 text-sm rounded-md border transition-colors ${
+                filters.nonAc ? 'bg-far-black text-far-cream' : 'border-far-gray bg-white'
+              }`}
+              onClick={() => toggleFilter('nonAc')}
+            >
+              Non-AC
+            </button>
+            <button
+              className={`px-3 py-2 text-sm rounded-md border transition-colors ${
+                filters.sleeper ? 'bg-far-black text-far-cream' : 'border-far-gray bg-white'
+              }`}
+              onClick={() => toggleFilter('sleeper')}
+            >
+              Sleeper
+            </button>
+            <button
+              className={`px-3 py-2 text-sm rounded-md border transition-colors ${
+                filters.seater ? 'bg-far-black text-far-cream' : 'border-far-gray bg-white'
+              }`}
+              onClick={() => toggleFilter('seater')}
+            >
+              Seater
+            </button>
+            <button
+              className={`px-3 py-2 text-sm rounded-md border transition-colors ${
+                filters.singleSeats ? 'bg-far-black text-far-cream' : 'border-far-gray bg-white'
+              }`}
+              onClick={() => toggleFilter('singleSeats')}
+            >
+              Single Seats
+            </button>
+          </div>
+          
+          <div className="mt-4 flex justify-end">
+            <button 
+              className="text-sm text-far-black underline"
+              onClick={clearFilters}
+            >
+              Clear Filters
+            </button>
+          </div>
+        </div>
+      )}
       
       {filteredBuses.length === 0 ? (
         <div className="card text-center py-10">
           <p className="text-lg font-medium">No buses found matching your filters.</p>
           <button 
             className="btn-outline mt-4"
-            onClick={() => setFilters({ac: false, nonAc: false, sleeper: false, seater: false, singleSeats: false})}
+            onClick={clearFilters}
           >
             Clear Filters
           </button>

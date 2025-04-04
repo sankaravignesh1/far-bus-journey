@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Seat } from '../types';
 import { Info, HelpCircle } from 'lucide-react';
@@ -21,141 +22,119 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
   const upperDeckSeats = seats.filter(seat => seat.deck === "upper");
   
   const renderSleeperLayout = (deckSeats: Seat[], deck: 'upper' | 'lower') => {
-    const seatNumbers = deckSeats.map(seat => seat.number);
+    const seatMap = new Map(deckSeats.map(seat => [seat.number, seat]));
     
     if (deck === 'upper') {
-      const seatMap = new Map(deckSeats.map(seat => [seat.number, seat]));
-      
-      const row1Seats = ['DU1', 'DU3', 'DU5', 'DU7', 'DU9', 'DU11'].map(num => 
-        seatMap.get(num) || {
-          id: `placeholder-${num}`,
-          number: num,
-          status: 'available' as const
-        }
+      const row1Seats = ['DU1', 'DU3', 'DU5', 'DU7', 'DU9', 'DU11'].filter(num => 
+        deckSeats.some(seat => seat.number === num)
       );
       
-      const row2Seats = ['DU2', 'DU4', 'DU6', 'DU8', 'DU10', 'DU12'].map(num => 
-        seatMap.get(num) || {
-          id: `placeholder-${num}`,
-          number: num,
-          status: 'available' as const
-        }
+      const row2Seats = ['DU2', 'DU4', 'DU6', 'DU8', 'DU10', 'DU12'].filter(num => 
+        deckSeats.some(seat => seat.number === num)
       );
       
-      const row3Seats = ['SU1', 'SU2', 'SU3', 'SU4', 'SU5', 'SU6'].map(num => 
-        seatMap.get(num) || {
-          id: `placeholder-${num}`,
-          number: num,
-          status: 'available' as const
-        }
+      const row3Seats = ['SU1', 'SU2', 'SU3', 'SU4', 'SU5', 'SU6'].filter(num => 
+        deckSeats.some(seat => seat.number === num)
       );
       
       return (
         <div className="mb-8">
           <div className="text-sm text-far-black/70 mb-2">Upper Deck</div>
           
-          <div className="grid grid-cols-12 gap-1 mb-2">
-            {row2Seats.map((seat, index) => {
-              const actualSeat = seatMap.get(seat.number);
-              if (!actualSeat && seat.id.includes('placeholder')) {
-                return <div key={`empty-${index}`} className="col-span-2"></div>;
-              }
+          <div className="grid grid-cols-6 gap-1 mb-2">
+            {['DU2', 'DU4', 'DU6', 'DU8', 'DU10', 'DU12'].map(num => {
+              const actualSeat = seatMap.get(num);
+              const isSelected = actualSeat && selectedSeats.some(s => s.id === actualSeat.id);
+              const seatExists = deckSeats.some(s => s.number === num);
               
-              const isSelected = selectedSeats.some(s => s.id === actualSeat?.id);
-              const isBooked = actualSeat?.status === 'booked';
-              const isFemaleBooked = actualSeat?.status === 'female_booked';
-              const isSingle = seat.number.startsWith('SU');
-              const seatExists = deckSeats.some(s => s.number === seat.number);
+              if (!seatExists) {
+                return <div key={`empty-${num}`} className="h-10 rounded-md flex items-center justify-center text-xs font-medium" />;
+              }
               
               return (
                 <div
-                  key={seat.id}
+                  key={num}
                   className={`
-                    col-span-2 h-10 rounded-sm flex items-center justify-center text-xs font-medium cursor-pointer
-                    ${!seatExists ? 'opacity-0' : ''}
-                    ${seatExists && actualSeat?.status === 'available' ? 'bg-[#00BCD4] text-white border border-[#0097A7]' : ''}
-                    ${isBooked ? 'bg-far-gray border-far-gray text-white cursor-not-allowed' : ''}
-                    ${isFemaleBooked ? 'bg-[#F48FB1] border-[#EC407A] text-white cursor-not-allowed' : ''}
-                    ${isSelected ? 'bg-far-black border-far-black text-far-cream' : ''}
+                    h-10 rounded-md flex items-center justify-center text-xs font-medium cursor-pointer
+                    ${!actualSeat ? 'opacity-0' : ''}
+                    ${actualSeat?.status === 'available' ? 'bg-white border border-gray-300 hover:border-far-green' : ''}
+                    ${actualSeat?.status === 'booked' ? 'bg-far-gray text-white cursor-not-allowed' : ''}
+                    ${actualSeat?.status === 'female_booked' ? 'bg-pink-200 border-pink-300 text-pink-800 cursor-not-allowed' : ''}
+                    ${isSelected ? 'bg-far-green border-far-green text-white' : ''}
                   `}
                   onClick={() => {
-                    if (seatExists && actualSeat?.status === 'available') {
+                    if (actualSeat && actualSeat.status === 'available') {
                       onSelectSeat(actualSeat);
                     }
                   }}
                 >
-                  {seatExists ? seat.number : ''}
+                  {num}
                 </div>
               );
             })}
           </div>
           
-          <div className="grid grid-cols-12 gap-1 mb-6">
-            {row1Seats.map((seat, index) => {
-              const actualSeat = seatMap.get(seat.number);
-              if (!actualSeat && seat.id.includes('placeholder')) {
-                return <div key={`empty-${index}`} className="col-span-2"></div>;
-              }
+          <div className="grid grid-cols-6 gap-1 mb-4">
+            {['DU1', 'DU3', 'DU5', 'DU7', 'DU9', 'DU11'].map(num => {
+              const actualSeat = seatMap.get(num);
+              const isSelected = actualSeat && selectedSeats.some(s => s.id === actualSeat.id);
+              const seatExists = deckSeats.some(s => s.number === num);
               
-              const isSelected = selectedSeats.some(s => s.id === actualSeat?.id);
-              const isBooked = actualSeat?.status === 'booked';
-              const isFemaleBooked = actualSeat?.status === 'female_booked';
-              const isSingle = seat.number.startsWith('SU');
-              const seatExists = deckSeats.some(s => s.number === seat.number);
+              if (!seatExists) {
+                return <div key={`empty-${num}`} className="h-10 rounded-md flex items-center justify-center text-xs font-medium" />;
+              }
               
               return (
                 <div
-                  key={seat.id}
+                  key={num}
                   className={`
-                    col-span-2 h-10 rounded-sm flex items-center justify-center text-xs font-medium cursor-pointer
-                    ${!seatExists ? 'opacity-0' : ''}
-                    ${seatExists && actualSeat?.status === 'available' ? 'bg-[#00BCD4] text-white border border-[#0097A7]' : ''}
-                    ${isBooked ? 'bg-far-gray border-far-gray text-white cursor-not-allowed' : ''}
-                    ${isFemaleBooked ? 'bg-[#F48FB1] border-[#EC407A] text-white cursor-not-allowed' : ''}
-                    ${isSelected ? 'bg-far-black border-far-black text-far-cream' : ''}
+                    h-10 rounded-md flex items-center justify-center text-xs font-medium cursor-pointer
+                    ${!actualSeat ? 'opacity-0' : ''}
+                    ${actualSeat?.status === 'available' ? 'bg-white border border-gray-300 hover:border-far-green' : ''}
+                    ${actualSeat?.status === 'booked' ? 'bg-far-gray text-white cursor-not-allowed' : ''}
+                    ${actualSeat?.status === 'female_booked' ? 'bg-pink-200 border-pink-300 text-pink-800 cursor-not-allowed' : ''}
+                    ${isSelected ? 'bg-far-green border-far-green text-white' : ''}
                   `}
                   onClick={() => {
-                    if (seatExists && actualSeat?.status === 'available') {
+                    if (actualSeat && actualSeat.status === 'available') {
                       onSelectSeat(actualSeat);
                     }
                   }}
                 >
-                  {seatExists ? seat.number : ''}
+                  {num}
                 </div>
               );
             })}
           </div>
           
-          <div className="grid grid-cols-12 gap-1">
-            {row3Seats.map((seat, index) => {
-              const actualSeat = seatMap.get(seat.number);
-              if (!actualSeat && seat.id.includes('placeholder')) {
-                return <div key={`empty-${index}`} className="col-span-2"></div>;
-              }
+          <div className="grid grid-cols-6 gap-1">
+            {['SU1', 'SU2', 'SU3', 'SU4', 'SU5', 'SU6'].map(num => {
+              const actualSeat = seatMap.get(num);
+              const isSelected = actualSeat && selectedSeats.some(s => s.id === actualSeat.id);
+              const seatExists = deckSeats.some(s => s.number === num);
               
-              const isSelected = selectedSeats.some(s => s.id === actualSeat?.id);
-              const isBooked = actualSeat?.status === 'booked';
-              const isFemaleBooked = actualSeat?.status === 'female_booked';
-              const seatExists = deckSeats.some(s => s.number === seat.number);
+              if (!seatExists) {
+                return <div key={`empty-${num}`} className="h-10 rounded-md flex items-center justify-center text-xs font-medium" />;
+              }
               
               return (
                 <div
-                  key={seat.id}
+                  key={num}
                   className={`
-                    col-span-2 h-10 rounded-sm flex items-center justify-center text-xs font-medium cursor-pointer
-                    ${!seatExists ? 'opacity-0' : ''}
-                    ${seatExists && actualSeat?.status === 'available' ? 'bg-[#00BCD4] text-white border border-[#0097A7]' : ''}
-                    ${isBooked ? 'bg-far-gray border-far-gray text-white cursor-not-allowed' : ''}
-                    ${isFemaleBooked ? 'bg-[#F48FB1] border-[#EC407A] text-white cursor-not-allowed' : ''}
-                    ${isSelected ? 'bg-far-black border-far-black text-far-cream' : ''}
+                    h-10 rounded-md flex items-center justify-center text-xs font-medium cursor-pointer
+                    ${!actualSeat ? 'opacity-0' : ''}
+                    ${actualSeat?.status === 'available' ? 'bg-white border border-gray-300 hover:border-far-green' : ''}
+                    ${actualSeat?.status === 'booked' ? 'bg-far-gray text-white cursor-not-allowed' : ''}
+                    ${actualSeat?.status === 'female_booked' ? 'bg-pink-200 border-pink-300 text-pink-800 cursor-not-allowed' : ''}
+                    ${isSelected ? 'bg-far-green border-far-green text-white' : ''}
                   `}
                   onClick={() => {
-                    if (seatExists && actualSeat?.status === 'available') {
+                    if (actualSeat && actualSeat.status === 'available') {
                       onSelectSeat(actualSeat);
                     }
                   }}
                 >
-                  {seatExists ? seat.number : ''}
+                  {num}
                 </div>
               );
             })}
@@ -165,32 +144,6 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
         </div>
       );
     } else {
-      const seatMap = new Map(deckSeats.map(seat => [seat.number, seat]));
-      
-      const row1Seats = ['DL1', 'DL3', 'DL5', 'DL7', 'DL9', 'DL11'].map(num => 
-        seatMap.get(num) || {
-          id: `placeholder-${num}`,
-          number: num,
-          status: 'available' as const
-        }
-      );
-      
-      const row2Seats = ['DL2', 'DL4', 'DL6', 'DL8', 'DL10', 'DL12'].map(num => 
-        seatMap.get(num) || {
-          id: `placeholder-${num}`,
-          number: num,
-          status: 'available' as const
-        }
-      );
-      
-      const row3Seats = ['SL1', 'SL2', 'SL3', 'SL4', 'SL5', 'SL6'].map(num => 
-        seatMap.get(num) || {
-          id: `placeholder-${num}`,
-          number: num,
-          status: 'available' as const
-        }
-      );
-      
       return (
         <div>
           <div className="text-sm text-far-black/70 mb-2">Lower Deck</div>
@@ -201,106 +154,100 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
             </div>
           </div>
           
-          <div className="grid grid-cols-12 gap-1 mb-2">
-            {row2Seats.map((seat, index) => {
-              const actualSeat = seatMap.get(seat.number);
-              if (!actualSeat && seat.id.includes('placeholder')) {
-                return <div key={`empty-${index}`} className="col-span-2"></div>;
-              }
+          <div className="grid grid-cols-6 gap-1 mb-2">
+            {['DL2', 'DL4', 'DL6', 'DL8', 'DL10', 'DL12'].map(num => {
+              const actualSeat = seatMap.get(num);
+              const isSelected = actualSeat && selectedSeats.some(s => s.id === actualSeat.id);
+              const seatExists = deckSeats.some(s => s.number === num);
               
-              const isSelected = selectedSeats.some(s => s.id === actualSeat?.id);
-              const isBooked = actualSeat?.status === 'booked';
-              const isFemaleBooked = actualSeat?.status === 'female_booked';
-              const seatExists = deckSeats.some(s => s.number === seat.number);
+              if (!seatExists) {
+                return <div key={`empty-${num}`} className="h-10 rounded-md flex items-center justify-center text-xs font-medium" />;
+              }
               
               return (
                 <div
-                  key={seat.id}
+                  key={num}
                   className={`
-                    col-span-2 h-10 rounded-sm flex items-center justify-center text-xs font-medium cursor-pointer
-                    ${!seatExists ? 'opacity-0' : ''}
-                    ${seatExists && actualSeat?.status === 'available' ? 'bg-[#00BCD4] text-white border border-[#0097A7]' : ''}
-                    ${isBooked ? 'bg-far-gray border-far-gray text-white cursor-not-allowed' : ''}
-                    ${isFemaleBooked ? 'bg-[#F48FB1] border-[#EC407A] text-white cursor-not-allowed' : ''}
-                    ${isSelected ? 'bg-far-black border-far-black text-far-cream' : ''}
+                    h-10 rounded-md flex items-center justify-center text-xs font-medium cursor-pointer
+                    ${!actualSeat ? 'opacity-0' : ''}
+                    ${actualSeat?.status === 'available' ? 'bg-white border border-gray-300 hover:border-far-green' : ''}
+                    ${actualSeat?.status === 'booked' ? 'bg-far-gray text-white cursor-not-allowed' : ''}
+                    ${actualSeat?.status === 'female_booked' ? 'bg-pink-200 border-pink-300 text-pink-800 cursor-not-allowed' : ''}
+                    ${isSelected ? 'bg-far-green border-far-green text-white' : ''}
                   `}
                   onClick={() => {
-                    if (seatExists && actualSeat?.status === 'available') {
+                    if (actualSeat && actualSeat.status === 'available') {
                       onSelectSeat(actualSeat);
                     }
                   }}
                 >
-                  {seatExists ? seat.number : ''}
+                  {num}
                 </div>
               );
             })}
           </div>
           
-          <div className="grid grid-cols-12 gap-1 mb-6">
-            {row1Seats.map((seat, index) => {
-              const actualSeat = seatMap.get(seat.number);
-              if (!actualSeat && seat.id.includes('placeholder')) {
-                return <div key={`empty-${index}`} className="col-span-2"></div>;
-              }
+          <div className="grid grid-cols-6 gap-1 mb-4">
+            {['DL1', 'DL3', 'DL5', 'DL7', 'DL9', 'DL11'].map(num => {
+              const actualSeat = seatMap.get(num);
+              const isSelected = actualSeat && selectedSeats.some(s => s.id === actualSeat.id);
+              const seatExists = deckSeats.some(s => s.number === num);
               
-              const isSelected = selectedSeats.some(s => s.id === actualSeat?.id);
-              const isBooked = actualSeat?.status === 'booked';
-              const isFemaleBooked = actualSeat?.status === 'female_booked';
-              const seatExists = deckSeats.some(s => s.number === seat.number);
+              if (!seatExists) {
+                return <div key={`empty-${num}`} className="h-10 rounded-md flex items-center justify-center text-xs font-medium" />;
+              }
               
               return (
                 <div
-                  key={seat.id}
+                  key={num}
                   className={`
-                    col-span-2 h-10 rounded-sm flex items-center justify-center text-xs font-medium cursor-pointer
-                    ${!seatExists ? 'opacity-0' : ''}
-                    ${seatExists && actualSeat?.status === 'available' ? 'bg-[#00BCD4] text-white border border-[#0097A7]' : ''}
-                    ${isBooked ? 'bg-far-gray border-far-gray text-white cursor-not-allowed' : ''}
-                    ${isFemaleBooked ? 'bg-[#F48FB1] border-[#EC407A] text-white cursor-not-allowed' : ''}
-                    ${isSelected ? 'bg-far-black border-far-black text-far-cream' : ''}
+                    h-10 rounded-md flex items-center justify-center text-xs font-medium cursor-pointer
+                    ${!actualSeat ? 'opacity-0' : ''}
+                    ${actualSeat?.status === 'available' ? 'bg-white border border-gray-300 hover:border-far-green' : ''}
+                    ${actualSeat?.status === 'booked' ? 'bg-far-gray text-white cursor-not-allowed' : ''}
+                    ${actualSeat?.status === 'female_booked' ? 'bg-pink-200 border-pink-300 text-pink-800 cursor-not-allowed' : ''}
+                    ${isSelected ? 'bg-far-green border-far-green text-white' : ''}
                   `}
                   onClick={() => {
-                    if (seatExists && actualSeat?.status === 'available') {
+                    if (actualSeat && actualSeat.status === 'available') {
                       onSelectSeat(actualSeat);
                     }
                   }}
                 >
-                  {seatExists ? seat.number : ''}
+                  {num}
                 </div>
               );
             })}
           </div>
           
-          <div className="grid grid-cols-12 gap-1">
-            {row3Seats.map((seat, index) => {
-              const actualSeat = seatMap.get(seat.number);
-              if (!actualSeat && seat.id.includes('placeholder')) {
-                return <div key={`empty-${index}`} className="col-span-2"></div>;
-              }
+          <div className="grid grid-cols-6 gap-1">
+            {['SL1', 'SL2', 'SL3', 'SL4', 'SL5', 'SL6'].map(num => {
+              const actualSeat = seatMap.get(num);
+              const isSelected = actualSeat && selectedSeats.some(s => s.id === actualSeat.id);
+              const seatExists = deckSeats.some(s => s.number === num);
               
-              const isSelected = selectedSeats.some(s => s.id === actualSeat?.id);
-              const isBooked = actualSeat?.status === 'booked';
-              const isFemaleBooked = actualSeat?.status === 'female_booked';
-              const seatExists = deckSeats.some(s => s.number === seat.number);
+              if (!seatExists) {
+                return <div key={`empty-${num}`} className="h-10 rounded-md flex items-center justify-center text-xs font-medium" />;
+              }
               
               return (
                 <div
-                  key={seat.id}
+                  key={num}
                   className={`
-                    col-span-2 h-10 rounded-sm flex items-center justify-center text-xs font-medium cursor-pointer
-                    ${!seatExists ? 'opacity-0' : ''}
-                    ${seatExists && actualSeat?.status === 'available' ? 'bg-[#00BCD4] text-white border border-[#0097A7]' : ''}
-                    ${isBooked ? 'bg-far-gray border-far-gray text-white cursor-not-allowed' : ''}
-                    ${isFemaleBooked ? 'bg-[#F48FB1] border-[#EC407A] text-white cursor-not-allowed' : ''}
-                    ${isSelected ? 'bg-far-black border-far-black text-far-cream' : ''}
+                    h-10 rounded-md flex items-center justify-center text-xs font-medium cursor-pointer
+                    ${!actualSeat ? 'opacity-0' : ''}
+                    ${actualSeat?.status === 'available' ? 'bg-white border border-gray-300 hover:border-far-green' : ''}
+                    ${actualSeat?.status === 'booked' ? 'bg-far-gray text-white cursor-not-allowed' : ''}
+                    ${actualSeat?.status === 'female_booked' ? 'bg-pink-200 border-pink-300 text-pink-800 cursor-not-allowed' : ''}
+                    ${isSelected ? 'bg-far-green border-far-green text-white' : ''}
                   `}
                   onClick={() => {
-                    if (seatExists && actualSeat?.status === 'available') {
+                    if (actualSeat && actualSeat.status === 'available') {
                       onSelectSeat(actualSeat);
                     }
                   }}
                 >
-                  {seatExists ? seat.number : ''}
+                  {num}
                 </div>
               );
             })}
@@ -320,10 +267,10 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
             key={seat.id}
             className={`
               seat
-              ${seat.status === 'available' ? 'seat-available' : ''}
-              ${seat.status === 'booked' ? 'seat-booked' : ''}
-              ${seat.status === 'female_booked' ? 'seat-female' : ''}
-              ${selectedSeats.some(s => s.id === seat.id) ? 'seat-selected' : ''}
+              ${seat.status === 'available' ? 'bg-white border-gray-300 hover:border-far-green' : ''}
+              ${seat.status === 'booked' ? 'bg-far-gray text-white cursor-not-allowed' : ''}
+              ${seat.status === 'female_booked' ? 'bg-pink-200 border-pink-300 text-pink-800 cursor-not-allowed' : ''}
+              ${selectedSeats.some(s => s.id === seat.id) ? 'bg-far-green border-far-green text-white' : ''}
             `}
             onClick={() => {
               if (seat.status === 'available') {
@@ -356,7 +303,7 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
           <h4 className="font-medium mb-2">Seat Legend</h4>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="flex items-center">
-              <div className="h-5 w-5 bg-[#00BCD4] border border-[#0097A7] mr-2"></div>
+              <div className="h-5 w-5 bg-white border border-gray-300 mr-2"></div>
               <span className="text-sm">Available</span>
             </div>
             <div className="flex items-center">
@@ -364,11 +311,11 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
               <span className="text-sm">Booked</span>
             </div>
             <div className="flex items-center">
-              <div className="h-5 w-5 bg-[#F48FB1] mr-2"></div>
+              <div className="h-5 w-5 bg-pink-200 mr-2"></div>
               <span className="text-sm">Female Booked</span>
             </div>
             <div className="flex items-center">
-              <div className="h-5 w-5 bg-far-black mr-2"></div>
+              <div className="h-5 w-5 bg-far-green mr-2"></div>
               <span className="text-sm">Selected</span>
             </div>
           </div>
