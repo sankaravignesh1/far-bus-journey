@@ -16,9 +16,7 @@ const Layout: React.FC<LayoutProps> = ({
           <div className="flex flex-col md:flex-row justify-between">
             <div className="mb-6 md:mb-0">
               <h3 className="text-xl font-serif mb-4">FAR</h3>
-              <p className="text-sm text-far-cream/80 max-w-xs">
-                Reliable and comfortable intercity bus travel service for all your journey needs.
-              </p>
+              <p className="text-sm text-far-cream/80 max-w-xs">Reliable bus booking service for all your journey needs.</p>
             </div>
             
             <div className="py-0">
