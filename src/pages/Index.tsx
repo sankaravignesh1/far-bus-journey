@@ -17,8 +17,8 @@ const Index = () => {
               </p>
               
               {/* Discount Banner */}
-              <div className="inline-block text-white px-4 py-2 rounded-md mb-6 transform -rotate-2 shadow-lg bg-gray-800">
-                <span className="font-bold text-xl">Flat 7.9% Off - Forever</span>
+              <div className="inline-block text-white px-4 py-2 rounded-md mb-6 transform -rotate-2 shadow-lg bg-far-gray">
+                <span className="font-bold text-xl text-far-black">Flat 7.9% Off - Forever</span>
               </div>
               
               <div className="flex flex-wrap gap-4">
