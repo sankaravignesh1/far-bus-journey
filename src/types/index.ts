@@ -13,8 +13,10 @@ export interface Bus {
   arrivalTime: string;
   duration: string;
   availableSeats: number;
+  singleSeats: number; // Added for single seats count
   fare: number;
   amenities: string[];
+  layout: "2+1" | "2+1-sleeper-seater" | "seater-sleeper" | "tilted-sleeper" | "all-seater";
 }
 
 export interface Seat {
@@ -22,7 +24,7 @@ export interface Seat {
   number: string;
   type: "Seater" | "Sleeper";
   status: "available" | "booked" | "female_booked" | "selected";
-  position: "lower" | "upper";
+  position: "single" | "double" | "tilted"; // Updated to handle different position types
   deck: "lower" | "upper";
   gender?: "male" | "female";
 }

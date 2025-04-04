@@ -15,6 +15,7 @@ const BusList: React.FC<BusListProps> = ({ buses, journeyDate }) => {
     nonAc: false,
     sleeper: false,
     seater: false,
+    singleSeats: false,
   });
   
   const toggleFilter = (filterName: keyof typeof filters) => {
@@ -26,7 +27,7 @@ const BusList: React.FC<BusListProps> = ({ buses, journeyDate }) => {
   
   const filteredBuses = buses.filter(bus => {
     // If no filters are active, show all buses
-    if (!filters.ac && !filters.nonAc && !filters.sleeper && !filters.seater) {
+    if (!filters.ac && !filters.nonAc && !filters.sleeper && !filters.seater && !filters.singleSeats) {
       return true;
     }
     
@@ -46,6 +47,11 @@ const BusList: React.FC<BusListProps> = ({ buses, journeyDate }) => {
       return false;
     }
     
+    // Apply Single Seats filter
+    if (filters.singleSeats && bus.singleSeats <= 0) {
+      return false;
+    }
+    
     return true;
   });
 
@@ -59,7 +65,7 @@ const BusList: React.FC<BusListProps> = ({ buses, journeyDate }) => {
           </span>
           <button
             className={`px-3 py-1 text-sm rounded-full border ${
-              filters.ac ? 'bg-far-green text-white' : 'border-far-gray bg-white'
+              filters.ac ? 'bg-far-black text-far-cream' : 'border-far-gray bg-white'
             }`}
             onClick={() => toggleFilter('ac')}
           >
@@ -67,7 +73,7 @@ const BusList: React.FC<BusListProps> = ({ buses, journeyDate }) => {
           </button>
           <button
             className={`px-3 py-1 text-sm rounded-full border ${
-              filters.nonAc ? 'bg-far-green text-white' : 'border-far-gray bg-white'
+              filters.nonAc ? 'bg-far-black text-far-cream' : 'border-far-gray bg-white'
             }`}
             onClick={() => toggleFilter('nonAc')}
           >
@@ -75,7 +81,7 @@ const BusList: React.FC<BusListProps> = ({ buses, journeyDate }) => {
           </button>
           <button
             className={`px-3 py-1 text-sm rounded-full border ${
-              filters.sleeper ? 'bg-far-green text-white' : 'border-far-gray bg-white'
+              filters.sleeper ? 'bg-far-black text-far-cream' : 'border-far-gray bg-white'
             }`}
             onClick={() => toggleFilter('sleeper')}
           >
@@ -83,11 +89,19 @@ const BusList: React.FC<BusListProps> = ({ buses, journeyDate }) => {
           </button>
           <button
             className={`px-3 py-1 text-sm rounded-full border ${
-              filters.seater ? 'bg-far-green text-white' : 'border-far-gray bg-white'
+              filters.seater ? 'bg-far-black text-far-cream' : 'border-far-gray bg-white'
             }`}
             onClick={() => toggleFilter('seater')}
           >
             Seater
+          </button>
+          <button
+            className={`px-3 py-1 text-sm rounded-full border ${
+              filters.singleSeats ? 'bg-far-black text-far-cream' : 'border-far-gray bg-white'
+            }`}
+            onClick={() => toggleFilter('singleSeats')}
+          >
+            Single Seats
           </button>
         </div>
       </div>
@@ -97,7 +111,7 @@ const BusList: React.FC<BusListProps> = ({ buses, journeyDate }) => {
           <p className="text-lg font-medium">No buses found matching your filters.</p>
           <button 
             className="btn-outline mt-4"
-            onClick={() => setFilters({ac: false, nonAc: false, sleeper: false, seater: false})}
+            onClick={() => setFilters({ac: false, nonAc: false, sleeper: false, seater: false, singleSeats: false})}
           >
             Clear Filters
           </button>

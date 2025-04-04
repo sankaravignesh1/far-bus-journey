@@ -16,7 +16,7 @@ const BusCard: React.FC<BusCardProps> = ({ bus, journeyDate }) => {
         <div className="lg:col-span-2">
           <h3 className="text-xl font-serif">{bus.name}</h3>
           <div className="flex items-center gap-3 mt-2 text-sm text-far-black/70">
-            <span className={`px-2 py-1 rounded ${bus.type === 'AC' ? 'bg-far-green/10 text-far-green' : 'bg-far-black/10 text-far-black/60'}`}>
+            <span className={`px-2 py-1 rounded ${bus.type === 'AC' ? 'bg-far-cream text-far-black' : 'bg-far-black/10 text-far-black/60'}`}>
               {bus.type}
             </span>
             <span className={`px-2 py-1 rounded ${bus.category === 'Sleeper' ? 'bg-far-black/10' : 'bg-far-black/5'}`}>
@@ -32,9 +32,9 @@ const BusCard: React.FC<BusCardProps> = ({ bus, journeyDate }) => {
               <p className="text-xs text-far-black/60">Departure</p>
             </div>
             <div className="flex items-center px-4">
-              <div className="w-2 h-2 rounded-full bg-far-green"></div>
-              <div className="flex-1 h-px bg-far-green/30 mx-1"></div>
-              <div className="w-2 h-2 rounded-full bg-far-green"></div>
+              <div className="w-2 h-2 rounded-full bg-far-cream"></div>
+              <div className="flex-1 h-px bg-far-cream/30 mx-1"></div>
+              <div className="w-2 h-2 rounded-full bg-far-cream"></div>
             </div>
             <div>
               <p className="text-2xl font-semibold">{bus.arrivalTime}</p>
@@ -52,15 +52,23 @@ const BusCard: React.FC<BusCardProps> = ({ bus, journeyDate }) => {
               </span>
             ))}
           </div>
-          <div className="mt-4 flex items-center text-sm">
-            <User className="h-4 w-4 mr-1 text-far-green" />
-            <span><span className="font-semibold">{bus.availableSeats}</span> Seats Available</span>
+          <div className="mt-4 flex flex-col gap-2 text-sm">
+            <div className="flex items-center">
+              <User className="h-4 w-4 mr-1 text-far-cream" />
+              <span><span className="font-semibold">{bus.availableSeats}</span> Seats Available</span>
+            </div>
+            {bus.singleSeats > 0 && (
+              <div className="flex items-center">
+                <User className="h-4 w-4 mr-1 text-far-cream" />
+                <span><span className="font-semibold">{bus.singleSeats}</span> Single Seats</span>
+              </div>
+            )}
           </div>
         </div>
         
         <div className="text-center flex flex-col justify-between lg:border-l lg:border-l-far-lightgray lg:pl-6">
           <div>
-            <p className="text-far-green text-2xl font-semibold">₹{bus.fare}</p>
+            <p className="text-far-black text-2xl font-semibold">₹{bus.fare}</p>
             <p className="text-xs text-far-black/60">Per seat</p>
           </div>
           <Link 

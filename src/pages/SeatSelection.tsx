@@ -27,7 +27,7 @@ const SeatSelectionPage = () => {
       if (bus) {
         setCurrentBus(bus);
         // Generate seats for this bus
-        const seats = generateSeats(busId, bus.category);
+        const seats = generateSeats(busId, bus.category, bus.layout);
         setAvailableSeats(seats);
       }
     }
@@ -39,6 +39,42 @@ const SeatSelectionPage = () => {
       setSelectedSeats(prev => prev.filter(s => s.id !== seat.id));
     } else if (selectedSeats.length < 6) {
       // If seat is not selected and we haven't reached the limit, select it
+      // Check for gender restriction on adjacent seats
+      const isDoublePosition = seat.position === "double";
+      const isFemaleRestricted = isDoublePosition && 
+                                availableSeats
+                                  .filter(s => s.status === "female_booked")
+                                  .some(s => {
+                                    // Check if this is an adjacent seat (based on seat number pattern)
+                                    const seatNum = seat.number;
+                                    const femaleNum = s.number;
+                                    
+                                    // For sleeper layouts, seats are typically numbered like L11, L12 where L11 and L12 are adjacent
+                                    if (seatNum.length === 3 && femaleNum.length === 3) {
+                                      const seatPrefix = seatNum.charAt(0);
+                                      const femalePrefix = femaleNum.charAt(0);
+                                      
+                                      if (seatPrefix === femalePrefix) {
+                                        const seatRow = seatNum.charAt(1);
+                                        const femaleRow = femaleNum.charAt(1);
+                                        
+                                        if (seatRow === femaleRow) {
+                                          const seatCol = parseInt(seatNum.charAt(2));
+                                          const femaleCol = parseInt(femaleNum.charAt(2));
+                                          
+                                          return Math.abs(seatCol - femaleCol) === 1 && seatCol % 3 !== 0 && femaleCol % 3 !== 0;
+                                        }
+                                      }
+                                    }
+                                    
+                                    return false;
+                                  });
+      
+      if (isFemaleRestricted) {
+        alert("This seat can only be booked by a female passenger due to an adjacent female passenger.");
+        return;
+      }
+      
       setSelectedSeats(prev => [...prev, seat]);
     } else {
       // If we've reached the limit, show an alert
@@ -69,7 +105,7 @@ const SeatSelectionPage = () => {
       <div className="container-custom py-8">
         <button 
           onClick={() => navigate(-1)}
-          className="flex items-center text-far-green mb-6"
+          className="flex items-center text-far-black mb-6"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Bus List
