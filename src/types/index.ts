@@ -21,7 +21,7 @@ export interface Bus {
 
 export interface Seat {
   id: string;
-  number: string;
+  number: string;  // Format: DL1-DL12, DU1-DU12 (Double seats), SL1-SL6, SU1-SU6 (Single seats)
   type: "Seater" | "Sleeper";
   status: "available" | "booked" | "female_booked" | "selected";
   position: "single" | "double" | "tilted"; // Updated to handle different position types

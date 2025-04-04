@@ -31,28 +31,30 @@ const BusList: React.FC<BusListProps> = ({ buses, journeyDate }) => {
       return true;
     }
     
+    let matchesFilter = false;
+    
     // Apply AC/Non-AC filter
-    if (filters.ac && bus.type !== 'AC') {
-      return false;
+    if (filters.ac && bus.type === 'AC') {
+      matchesFilter = true;
     }
-    if (filters.nonAc && bus.type !== 'Non-AC') {
-      return false;
+    if (filters.nonAc && bus.type === 'Non-AC') {
+      matchesFilter = true;
     }
     
     // Apply Sleeper/Seater filter
-    if (filters.sleeper && bus.category !== 'Sleeper') {
-      return false;
+    if (filters.sleeper && bus.category === 'Sleeper') {
+      matchesFilter = true;
     }
-    if (filters.seater && bus.category !== 'Seater') {
-      return false;
+    if (filters.seater && bus.category === 'Seater') {
+      matchesFilter = true;
     }
     
     // Apply Single Seats filter
-    if (filters.singleSeats && bus.singleSeats <= 0) {
-      return false;
+    if (filters.singleSeats && bus.singleSeats > 0) {
+      matchesFilter = true;
     }
     
-    return true;
+    return matchesFilter;
   });
 
   return (

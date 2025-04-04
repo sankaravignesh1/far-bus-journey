@@ -1,11 +1,17 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import Layout from '../components/Layout';
 import SearchForm from '../components/SearchForm';
 import BusList from '../components/BusList';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { buses } from '../data/mockData';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ChevronDown } from 'lucide-react';
+import { 
+  Accordion, 
+  AccordionContent, 
+  AccordionItem, 
+  AccordionTrigger 
+} from '@/components/ui/accordion';
 
 const BusListing = () => {
   const location = useLocation();
@@ -15,8 +21,93 @@ const BusListing = () => {
   const toCity = queryParams.get('to') || '';
   const journeyDate = queryParams.get('date') || '';
 
-  // In a real app, we would fetch buses based on the search criteria
-  // For this demo, we'll just use all the mock buses
+  const [filters, setFilters] = useState({
+    // Departure Time
+    morning: false,  // 6AM - 12PM
+    afternoon: false, // 12PM - 6PM
+    evening: false,  // 6PM - 12AM
+    night: false,    // 12AM - 6AM
+    
+    // Bus Type
+    ac: false,
+    nonAc: false,
+    sleeper: false,
+    seater: false,
+    
+    // Seat Features
+    singleSeats: false,
+    
+    // Amenities
+    wifi: false,
+    chargingPoint: false,
+    blanket: false,
+    waterBottle: false,
+  });
+
+  const handleFilterChange = (filterName: string) => {
+    setFilters(prev => ({
+      ...prev,
+      [filterName]: !prev[filterName as keyof typeof prev]
+    }));
+  };
+
+  // Filter buses based on selected filters
+  const filteredBuses = buses.filter(bus => {
+    // If no filters are selected, return all buses
+    if (Object.values(filters).every(value => value === false)) {
+      return true;
+    }
+
+    // Apply Departure Time filters
+    const departureHour = parseInt(bus.departureTime.split(':')[0]);
+    if (filters.morning && (departureHour >= 6 && departureHour < 12)) {
+      return true;
+    }
+    if (filters.afternoon && (departureHour >= 12 && departureHour < 18)) {
+      return true;
+    }
+    if (filters.evening && (departureHour >= 18 && departureHour < 24)) {
+      return true;
+    }
+    if (filters.night && (departureHour >= 0 && departureHour < 6)) {
+      return true;
+    }
+
+    // Apply Bus Type filters
+    if (filters.ac && bus.type === 'AC') {
+      return true;
+    }
+    if (filters.nonAc && bus.type === 'Non-AC') {
+      return true;
+    }
+    if (filters.sleeper && bus.category === 'Sleeper') {
+      return true;
+    }
+    if (filters.seater && bus.category === 'Seater') {
+      return true;
+    }
+
+    // Apply Seat Features filters
+    if (filters.singleSeats && bus.singleSeats > 0) {
+      return true;
+    }
+
+    // Apply Amenities filters
+    if (filters.wifi && bus.amenities.includes('WiFi')) {
+      return true;
+    }
+    if (filters.chargingPoint && bus.amenities.includes('Charging Point')) {
+      return true;
+    }
+    if (filters.blanket && bus.amenities.includes('Blanket')) {
+      return true;
+    }
+    if (filters.waterBottle && bus.amenities.includes('Water Bottle')) {
+      return true;
+    }
+
+    return false;
+  });
 
   return (
     <Layout>
@@ -44,86 +135,161 @@ const BusListing = () => {
           <div className="lg:col-span-1 card h-fit p-4">
             <h3 className="text-lg font-serif mb-4">Advanced Filters</h3>
             <div className="space-y-4">
-              <div>
-                <h4 className="text-sm font-medium mb-2">Departure Time</h4>
-                <div className="space-y-2">
-                  <label className="flex items-center">
-                    <input type="checkbox" className="mr-2" />
-                    <span className="text-sm">Morning (6AM - 12PM)</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="mr-2" />
-                    <span className="text-sm">Afternoon (12PM - 6PM)</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="mr-2" />
-                    <span className="text-sm">Evening (6PM - 12AM)</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="mr-2" />
-                    <span className="text-sm">Night (12AM - 6AM)</span>
-                  </label>
-                </div>
-              </div>
-              
-              <div>
-                <h4 className="text-sm font-medium mb-2">Bus Type</h4>
-                <div className="space-y-2">
-                  <label className="flex items-center">
-                    <input type="checkbox" className="mr-2" />
-                    <span className="text-sm">AC</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="mr-2" />
-                    <span className="text-sm">Non-AC</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="mr-2" />
-                    <span className="text-sm">Sleeper</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="mr-2" />
-                    <span className="text-sm">Seater</span>
-                  </label>
-                </div>
-              </div>
-              
-              <div>
-                <h4 className="text-sm font-medium mb-2">Seat Features</h4>
-                <div className="space-y-2">
-                  <label className="flex items-center">
-                    <input type="checkbox" className="mr-2" />
-                    <span className="text-sm">Single Seats Available</span>
-                  </label>
-                </div>
-              </div>
-              
-              <div>
-                <h4 className="text-sm font-medium mb-2">Amenities</h4>
-                <div className="space-y-2">
-                  <label className="flex items-center">
-                    <input type="checkbox" className="mr-2" />
-                    <span className="text-sm">WiFi</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="mr-2" />
-                    <span className="text-sm">Charging Point</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="mr-2" />
-                    <span className="text-sm">Blanket</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="mr-2" />
-                    <span className="text-sm">Water Bottle</span>
-                  </label>
-                </div>
-              </div>
+              <Accordion type="single" collapsible>
+                <AccordionItem value="departure-time">
+                  <AccordionTrigger className="text-sm font-medium py-2">Departure Time</AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-2">
+                      <label className="flex items-center">
+                        <input 
+                          type="checkbox" 
+                          className="mr-2" 
+                          checked={filters.morning}
+                          onChange={() => handleFilterChange('morning')}
+                        />
+                        <span className="text-sm">Morning (6AM - 12PM)</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input 
+                          type="checkbox" 
+                          className="mr-2" 
+                          checked={filters.afternoon}
+                          onChange={() => handleFilterChange('afternoon')}
+                        />
+                        <span className="text-sm">Afternoon (12PM - 6PM)</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input 
+                          type="checkbox" 
+                          className="mr-2" 
+                          checked={filters.evening}
+                          onChange={() => handleFilterChange('evening')}
+                        />
+                        <span className="text-sm">Evening (6PM - 12AM)</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input 
+                          type="checkbox" 
+                          className="mr-2" 
+                          checked={filters.night}
+                          onChange={() => handleFilterChange('night')}
+                        />
+                        <span className="text-sm">Night (12AM - 6AM)</span>
+                      </label>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+                
+                <AccordionItem value="bus-type">
+                  <AccordionTrigger className="text-sm font-medium py-2">Bus Type</AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-2">
+                      <label className="flex items-center">
+                        <input 
+                          type="checkbox" 
+                          className="mr-2" 
+                          checked={filters.ac}
+                          onChange={() => handleFilterChange('ac')}
+                        />
+                        <span className="text-sm">AC</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input 
+                          type="checkbox" 
+                          className="mr-2" 
+                          checked={filters.nonAc}
+                          onChange={() => handleFilterChange('nonAc')}
+                        />
+                        <span className="text-sm">Non-AC</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input 
+                          type="checkbox" 
+                          className="mr-2" 
+                          checked={filters.sleeper}
+                          onChange={() => handleFilterChange('sleeper')}
+                        />
+                        <span className="text-sm">Sleeper</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input 
+                          type="checkbox" 
+                          className="mr-2" 
+                          checked={filters.seater}
+                          onChange={() => handleFilterChange('seater')}
+                        />
+                        <span className="text-sm">Seater</span>
+                      </label>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+                
+                <AccordionItem value="seat-features">
+                  <AccordionTrigger className="text-sm font-medium py-2">Seat Features</AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-2">
+                      <label className="flex items-center">
+                        <input 
+                          type="checkbox" 
+                          className="mr-2" 
+                          checked={filters.singleSeats}
+                          onChange={() => handleFilterChange('singleSeats')}
+                        />
+                        <span className="text-sm">Single Seats Available</span>
+                      </label>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+                
+                <AccordionItem value="amenities">
+                  <AccordionTrigger className="text-sm font-medium py-2">Amenities</AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-2">
+                      <label className="flex items-center">
+                        <input 
+                          type="checkbox" 
+                          className="mr-2" 
+                          checked={filters.wifi}
+                          onChange={() => handleFilterChange('wifi')}
+                        />
+                        <span className="text-sm">WiFi</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input 
+                          type="checkbox" 
+                          className="mr-2" 
+                          checked={filters.chargingPoint}
+                          onChange={() => handleFilterChange('chargingPoint')}
+                        />
+                        <span className="text-sm">Charging Point</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input 
+                          type="checkbox" 
+                          className="mr-2" 
+                          checked={filters.blanket}
+                          onChange={() => handleFilterChange('blanket')}
+                        />
+                        <span className="text-sm">Blanket</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input 
+                          type="checkbox" 
+                          className="mr-2" 
+                          checked={filters.waterBottle}
+                          onChange={() => handleFilterChange('waterBottle')}
+                        />
+                        <span className="text-sm">Water Bottle</span>
+                      </label>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </div>
           </div>
           
           <div className="lg:col-span-3">
-            <BusList buses={buses} journeyDate={journeyDate} />
+            <BusList buses={filteredBuses} journeyDate={journeyDate} />
           </div>
         </div>
       </div>
