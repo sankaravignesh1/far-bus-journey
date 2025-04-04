@@ -1,11 +1,9 @@
-
 import React, { useState } from 'react';
 import Layout from '../components/Layout';
 import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Bus } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
-
 const TrackBus = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
@@ -13,14 +11,12 @@ const TrackBus = () => {
   const mobile = queryParams.get('mobile');
   const [loading, setLoading] = useState(false);
   const [trackingData, setTrackingData] = useState<any>(null);
-  
+
   // If we don't have PNR or mobile in the URL, show the form
   const [pnrInput, setPnrInput] = useState(pnr || '');
   const [mobileInput, setMobileInput] = useState(mobile || '');
-
   const fetchTracking = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    
     setLoading(true);
     // Mock API call
     setTimeout(() => {
@@ -38,57 +34,34 @@ const TrackBus = () => {
           lastUpdated: '10:45 AM',
           status: 'On Time',
           distance: '120 km',
-          progress: 60,
+          progress: 60
         });
       } else {
         toast({
           title: "No tracking information found",
           description: "We couldn't find any bus with the provided details.",
-          variant: "destructive",
+          variant: "destructive"
         });
       }
       setLoading(false);
     }, 1000);
   };
-
-  return (
-    <Layout>
+  return <Layout>
       <div className="container-custom py-12">
         <h1 className="text-3xl font-bold mb-8 text-center">Track Bus</h1>
         
-        {!trackingData ? (
-          <div className="max-w-md mx-auto card">
+        {!trackingData ? <div className="max-w-md mx-auto card">
             <form onSubmit={fetchTracking}>
               <div className="space-y-4">
                 <div>
                   <label htmlFor="pnr" className="block mb-2 text-sm font-medium">PNR Number</label>
-                  <input
-                    id="pnr"
-                    type="text"
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                    placeholder="Enter PNR Number"
-                    value={pnrInput}
-                    onChange={(e) => setPnrInput(e.target.value)}
-                    required
-                  />
+                  <input id="pnr" type="text" className="w-full p-2 border border-gray-300 rounded-md" placeholder="Enter PNR Number" value={pnrInput} onChange={e => setPnrInput(e.target.value)} required />
                 </div>
                 <div>
                   <label htmlFor="mobile" className="block mb-2 text-sm font-medium">Mobile Number</label>
-                  <input
-                    id="mobile"
-                    type="tel"
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                    placeholder="Enter Mobile Number"
-                    value={mobileInput}
-                    onChange={(e) => setMobileInput(e.target.value)}
-                    required
-                  />
+                  <input id="mobile" type="tel" className="w-full p-2 border border-gray-300 rounded-md" placeholder="Enter Mobile Number" value={mobileInput} onChange={e => setMobileInput(e.target.value)} required />
                 </div>
-                <Button 
-                  type="submit" 
-                  className="w-full bg-far-green hover:bg-far-green/90"
-                  disabled={loading}
-                >
+                <Button type="submit" disabled={loading} className="w-full bg-far-black">
                   {loading ? 'Fetching tracking info...' : 'Track Bus'}
                 </Button>
               </div>
@@ -97,9 +70,7 @@ const TrackBus = () => {
             <div className="mt-8 text-sm text-gray-500">
               <p><strong>Note:</strong> For demo purposes, enter PNR: 123456 and Mobile: 9876543210</p>
             </div>
-          </div>
-        ) : (
-          <div className="max-w-xl mx-auto card">
+          </div> : <div className="max-w-xl mx-auto card">
             <div className="border-b pb-4 mb-4 flex items-center justify-between">
               <h2 className="text-xl font-bold">Live Tracking</h2>
               <Button onClick={() => fetchTracking()} className="flex items-center gap-2">
@@ -114,14 +85,13 @@ const TrackBus = () => {
               </div>
               
               <div className="relative h-2 bg-gray-200 rounded-full">
-                <div 
-                  className="absolute top-0 left-0 h-2 bg-far-green rounded-full" 
-                  style={{ width: `${trackingData.progress}%` }}
-                ></div>
-                <div 
-                  className="absolute -top-1 h-4 w-4 bg-far-black rounded-full border-2 border-white" 
-                  style={{ left: `${trackingData.progress}%`, transform: 'translateX(-50%)' }}
-                ></div>
+                <div className="absolute top-0 left-0 h-2 bg-far-green rounded-full" style={{
+              width: `${trackingData.progress}%`
+            }}></div>
+                <div className="absolute -top-1 h-4 w-4 bg-far-black rounded-full border-2 border-white" style={{
+              left: `${trackingData.progress}%`,
+              transform: 'translateX(-50%)'
+            }}></div>
               </div>
               
               <div className="mt-1 flex justify-between text-xs text-gray-500">
@@ -162,11 +132,8 @@ const TrackBus = () => {
                 <p><span className="font-medium">Journey Date:</span> {trackingData.departureDate}</p>
               </div>
             </div>
-          </div>
-        )}
+          </div>}
       </div>
-    </Layout>
-  );
+    </Layout>;
 };
-
 export default TrackBus;
