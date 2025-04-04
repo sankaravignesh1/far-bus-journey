@@ -46,19 +46,19 @@ const SearchForm = () => {
       {/* Tabs */}
       <div className="flex border-b">
         <button
-          className={`flex-1 py-3 font-medium text-center ${activeTab === TabTypes.BOOK ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-800'}`}
+          className={`flex-1 py-3 font-medium text-center ${activeTab === TabTypes.BOOK ? 'bg-far-black text-far-cream' : 'bg-far-cream text-far-black'}`}
           onClick={() => setActiveTab(TabTypes.BOOK)}
         >
           Book
         </button>
         <button
-          className={`flex-1 py-3 font-medium text-center ${activeTab === TabTypes.PRINT ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-800'}`}
+          className={`flex-1 py-3 font-medium text-center ${activeTab === TabTypes.PRINT ? 'bg-far-black text-far-cream' : 'bg-far-cream text-far-black'}`}
           onClick={() => setActiveTab(TabTypes.PRINT)}
         >
           Print
         </button>
         <button
-          className={`flex-1 py-3 font-medium text-center ${activeTab === TabTypes.TRACK ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-800'}`}
+          className={`flex-1 py-3 font-medium text-center ${activeTab === TabTypes.TRACK ? 'bg-far-black text-far-cream' : 'bg-far-cream text-far-black'}`}
           onClick={() => setActiveTab(TabTypes.TRACK)}
         >
           Track
@@ -69,7 +69,7 @@ const SearchForm = () => {
       <div className="p-6">
         {activeTab === TabTypes.BOOK && (
           <>
-            <p className="text-center text-gray-600 mb-4">Where would you like to go?</p>
+            <p className="text-center text-far-black/70 mb-4">Where would you like to go?</p>
             <form onSubmit={handleSubmit}>
               <div className="space-y-4">
                 <div className="relative">
@@ -162,7 +162,7 @@ const SearchForm = () => {
               <div className="mt-6 text-center">
                 <button
                   type="submit"
-                  className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-md flex items-center justify-center"
+                  className="w-full bg-far-black hover:bg-far-black/80 text-far-cream py-3 px-4 rounded-md flex items-center justify-center"
                 >
                   <Search className="h-5 w-5 mr-2" />
                   Search
@@ -207,7 +207,7 @@ const SearchForm = () => {
             <div className="mt-6 text-center">
               <button
                 type="submit"
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-md flex items-center justify-center"
+                className="w-full bg-far-black hover:bg-far-black/80 text-far-cream py-3 px-4 rounded-md flex items-center justify-center"
               >
                 {activeTab === TabTypes.PRINT ? (
                   <>
