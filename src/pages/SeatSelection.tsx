@@ -19,6 +19,7 @@ const SeatSelectionPage = () => {
   const [availableSeats, setAvailableSeats] = useState<Seat[]>([]);
   const [currentBus, setCurrentBus] = useState<Bus | null>(null);
   const [showPassengerForm, setShowPassengerForm] = useState(false);
+  const [loading, setLoading] = useState(true);
   
   useEffect(() => {
     if (busId) {
@@ -28,8 +29,10 @@ const SeatSelectionPage = () => {
         setCurrentBus(bus);
         // Generate seats for this bus
         const seats = generateSeats(busId, bus.category, bus.layout);
+        console.log("Generated seats:", seats);
         setAvailableSeats(seats);
       }
+      setLoading(false);
     }
   }, [busId]);
   
@@ -90,11 +93,27 @@ const SeatSelectionPage = () => {
     setShowPassengerForm(true);
   };
   
+  if (loading) {
+    return (
+      <Layout>
+        <div className="container-custom py-12 text-center">
+          <p>Loading bus details...</p>
+        </div>
+      </Layout>
+    );
+  }
+
   if (!currentBus) {
     return (
       <Layout>
         <div className="container-custom py-12 text-center">
-          <p>Loading...</p>
+          <p>Bus not found. Please try again.</p>
+          <button 
+            onClick={() => navigate(-1)}
+            className="btn-outline mt-4"
+          >
+            Go Back
+          </button>
         </div>
       </Layout>
     );
@@ -130,6 +149,7 @@ const SeatSelectionPage = () => {
               selectedSeats={selectedSeats}
               onSelectSeat={handleSeatSelect}
               busType={currentBus.category}
+              busLayout={currentBus.layout}
             />
             
             {selectedSeats.length > 0 && (
