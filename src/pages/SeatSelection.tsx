@@ -27,7 +27,7 @@ const SeatSelectionPage = () => {
       const bus = buses.find(b => b.id === busId);
       if (bus) {
         setCurrentBus(bus);
-        // Generate the 3x7 grid for both decks
+        // Generate the new 3x6 grid for both decks
         const seats = generateTwoDeckSleeperSeats(busId);
         console.log("Generated seats:", seats);
         setAvailableSeats(seats);
@@ -36,14 +36,14 @@ const SeatSelectionPage = () => {
     }
   }, [busId]);
   
-  // New function to generate the 3x7 grid layout for both decks
+  // Updated function to generate the 3x6 grid layout for both decks
   const generateTwoDeckSleeperSeats = (busId: string): Seat[] => {
     const seats: Seat[] = [];
     const rows = 3;
-    const cols = 7;
+    const cols = 6;
     const totalSeatsPerDeck = rows * cols;
     
-    // Generate lower deck seats (L01 to L21)
+    // Generate lower deck seats (L01 to L18)
     for (let i = 1; i <= totalSeatsPerDeck; i++) {
       const seatNumber = `L${i.toString().padStart(2, '0')}`;
       
@@ -66,7 +66,7 @@ const SeatSelectionPage = () => {
       });
     }
     
-    // Generate upper deck seats (U01 to U21)
+    // Generate upper deck seats (U01 to U18)
     for (let i = 1; i <= totalSeatsPerDeck; i++) {
       const seatNumber = `U${i.toString().padStart(2, '0')}`;
       
@@ -112,11 +112,11 @@ const SeatSelectionPage = () => {
             const femaleIndex = parseInt(femaleNum.substring(1));
             
             // Check if they're in the same row and adjacent columns
-            // For a 7-column layout
-            const seatRow = Math.floor((seatIndex - 1) / 7);
-            const seatCol = (seatIndex - 1) % 7;
-            const femaleRow = Math.floor((femaleIndex - 1) / 7);
-            const femaleCol = (femaleIndex - 1) % 7;
+            // For a 6-column layout
+            const seatRow = Math.floor((seatIndex - 1) / 6);
+            const seatCol = (seatIndex - 1) % 6;
+            const femaleRow = Math.floor((femaleIndex - 1) / 6);
+            const femaleCol = (femaleIndex - 1) % 6;
             
             return seatRow === femaleRow && Math.abs(seatCol - femaleCol) === 1;
           }
