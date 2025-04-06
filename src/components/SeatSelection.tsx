@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Seat } from '../types';
-import { Info, HelpCircle, SteeringWheel } from 'lucide-react';
+import { Info, HelpCircle, Compass } from 'lucide-react';
 
 interface SeatSelectionProps {
   seats: Seat[];
@@ -91,7 +91,7 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
         <div className="flex items-center">
           {deckType === 'lower' && (
             <div className="mr-2 text-gray-500">
-              <SteeringWheel size={24} />
+              <Compass size={24} />
             </div>
           )}
           <h3 className="text-lg font-serif mb-2">
