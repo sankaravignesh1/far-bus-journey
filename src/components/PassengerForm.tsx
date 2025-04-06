@@ -1,8 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Seat, BoardingPoint, DroppingPoint } from '../types';
 import { Check } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
 
 interface PassengerFormProps {
   selectedSeats: Seat[];
@@ -18,6 +19,8 @@ interface PassengerDetails {
   name: string;
   age: string;
   gender: "male" | "female";
+  seatNumber: string;
+  requiresFemale?: boolean;
 }
 
 const PassengerForm: React.FC<PassengerFormProps> = ({
@@ -29,6 +32,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
   fare,
 }) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [contactEmail, setContactEmail] = useState("");
   const [contactMobile, setContactMobile] = useState("");
   const [selectedBoardingPoint, setSelectedBoardingPoint] = useState<string>("");
@@ -39,6 +43,8 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
       name: "",
       age: "",
       gender: "male",
+      seatNumber: seat.number,
+      requiresFemale: (seat as any).requiresFemale
     }))
   );
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -47,6 +53,15 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
     setPassengers(prev =>
       prev.map(p => {
         if (p.seatId === seatId) {
+          // Handle gender change for seats with female requirement
+          if (field === "gender" && p.requiresFemale && value === "male") {
+            toast({
+              title: "Gender Restriction",
+              description: `Seat ${p.seatNumber} can only be booked for a female passenger due to adjacent female booking.`,
+              variant: "destructive",
+            });
+            return p; // Don't update, keep as female
+          }
           return { ...p, [field]: value };
         }
         return p;
@@ -57,10 +72,29 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Check if any passenger with female required seat is trying to book as male
+    const invalidGenderAssignment = passengers.some(
+      p => p.requiresFemale && p.gender === "male"
+    );
+    
+    if (invalidGenderAssignment) {
+      toast({
+        title: "Gender Restriction",
+        description: "Some seats can only be booked for female passengers due to adjacent female bookings.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // In a real app, we would validate and submit the data to a backend API
     // For now, we'll just show a success message and navigate back to home
     
-    alert("Booking successful! Your ticket has been emailed to you.");
+    toast({
+      title: "Booking Successful",
+      description: "Your ticket has been emailed to you.",
+      variant: "default",
+    });
+    
     navigate("/");
   };
   
@@ -71,11 +105,18 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
       <form onSubmit={handleSubmit} className="space-y-8">
         <div>
           <h3 className="text-xl font-serif mb-6">Passenger Details</h3>
-          {selectedSeats.map((seat, index) => (
-            <div key={seat.id} className="card mb-4">
+          {passengers.map((passenger, index) => (
+            <div key={passenger.seatId} className="card mb-4">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="font-medium">Passenger {index + 1}</h4>
-                <span className="text-sm bg-far-cream px-2 py-1 rounded">Seat {seat.number}</span>
+                <span className="text-sm bg-far-cream px-2 py-1 rounded flex items-center">
+                  Seat {passenger.seatNumber}
+                  {passenger.requiresFemale && (
+                    <span className="ml-2 text-xs bg-pink-100 text-pink-800 px-2 py-0.5 rounded">
+                      Female only
+                    </span>
+                  )}
+                </span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
@@ -83,8 +124,8 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
                   <input
                     type="text"
                     className="input-field w-full"
-                    value={passengers[index].name}
-                    onChange={(e) => handlePassengerChange(seat.id, "name", e.target.value)}
+                    value={passenger.name}
+                    onChange={(e) => handlePassengerChange(passenger.seatId, "name", e.target.value)}
                     required
                   />
                 </div>
@@ -95,26 +136,32 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
                     min="1"
                     max="120"
                     className="input-field w-full"
-                    value={passengers[index].age}
-                    onChange={(e) => handlePassengerChange(seat.id, "age", e.target.value)}
+                    value={passenger.age}
+                    onChange={(e) => handlePassengerChange(passenger.seatId, "age", e.target.value)}
                     required
                   />
                 </div>
                 <div>
                   <label className="block text-sm mb-1">Gender</label>
                   <select
-                    className="input-field w-full"
-                    value={passengers[index].gender}
+                    className={`input-field w-full ${passenger.requiresFemale ? 'bg-pink-50' : ''}`}
+                    value={passenger.gender}
                     onChange={(e) => handlePassengerChange(
-                      seat.id, 
+                      passenger.seatId, 
                       "gender", 
                       e.target.value as "male" | "female"
                     )}
                     required
+                    disabled={passenger.requiresFemale}
                   >
                     <option value="male">Male</option>
                     <option value="female">Female</option>
                   </select>
+                  {passenger.requiresFemale && (
+                    <p className="text-xs text-pink-700 mt-1">
+                      Due to an adjacent female booking, this seat can only be booked for a female passenger.
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
