@@ -311,30 +311,45 @@ const SeatSelectionPage = () => {
   
   // Function to check if a seat is adjacent to a female booked seat
   const isAdjacentToFemaleBookedSeat = (seat: Seat): boolean => {
-    // Only apply the female seat restriction to the first two rows
+    // Only apply the female seat restriction to columns, not rows
     const seatNum = seat.number;
     const deckPrefix = seatNum.substring(0, 1); // L or U
     const numPart = parseInt(seatNum.substring(1));
     
-    // Determine row based on bus layout
-    let rowNum = 0;
+    // Get the column index for the seat
+    let seatCol = 0;
+    
     if (currentBus?.layout === "all-seater") {
-      rowNum = Math.floor((numPart - 1) / 12);
+      // For all-seater: 12 seats per row
+      seatCol = (numPart - 1) % 12;
     } else if (currentBus?.layout === "2+1-sleeper-seater" || currentBus?.layout === "seater-sleeper") {
-      rowNum = numPart <= 12 ? 0 : numPart <= 24 ? 1 : 2;
+      // For mixed layouts, first two rows have 6 columns each in standard layout
+      const rowNum = numPart <= 12 ? 0 : numPart <= 24 ? 1 : 2;
+      seatCol = rowNum < 2 ? (numPart - 1) % 6 : (numPart - 1) % 12;
     } else {
-      rowNum = Math.floor((numPart - 1) / 6);
+      // Standard layout with 6 columns
+      seatCol = (numPart - 1) % 6;
     }
     
-    // Only apply to rows 0 and 1 (first two rows)
+    // Only restrict if the seat is in the first two rows (rows 0 and 1)
+    const rowNum = Math.floor((numPart - 1) / 
+      (currentBus?.layout === "all-seater" ? 12 : 
+       (currentBus?.layout === "2+1-sleeper-seater" || currentBus?.layout === "seater-sleeper") ? 
+       (numPart <= 24 ? 12 : 6) : 6));
+    
     if (rowNum >= 2) {
-      return false;
+      return false; // No restrictions on third row
     }
     
-    // Find seats in the same row and check if any adjacent seat is female booked
+    // Check if there's a female booked seat in the same column
+    // We only consider the first two rows, and only the third element in the column
     return availableSeats
-      .filter(s => s.status === "female_booked" && s.deck === seat.deck)
-      .some(s => {
+      .filter(s => {
+        // Only consider female booked seats on the same deck
+        if (s.status !== "female_booked" || s.deck !== seat.deck) {
+          return false;
+        }
+        
         const femaleNum = s.number;
         const femaleDeckPrefix = femaleNum.substring(0, 1);
         const femaleNumPart = parseInt(femaleNum.substring(1));
@@ -344,31 +359,30 @@ const SeatSelectionPage = () => {
           return false;
         }
         
-        // Get row and column for both seats
-        let femaleRow = 0;
+        // Get column for female seat
         let femaleCol = 0;
-        let seatCol = 0;
-        
         if (currentBus?.layout === "all-seater") {
-          // For all-seater: 12 seats per row
-          femaleRow = Math.floor((femaleNumPart - 1) / 12);
           femaleCol = (femaleNumPart - 1) % 12;
-          seatCol = (numPart - 1) % 12;
         } else if (currentBus?.layout === "2+1-sleeper-seater" || currentBus?.layout === "seater-sleeper") {
-          // For mixed layouts
-          femaleRow = femaleNumPart <= 12 ? 0 : femaleNumPart <= 24 ? 1 : 2;
+          const femaleRow = femaleNumPart <= 12 ? 0 : femaleNumPart <= 24 ? 1 : 2;
           femaleCol = femaleRow < 2 ? (femaleNumPart - 1) % 6 : (femaleNumPart - 1) % 12;
-          seatCol = rowNum < 2 ? (numPart - 1) % 6 : (numPart - 1) % 12;
         } else {
-          // Default 6 seats per row layout
-          femaleRow = Math.floor((femaleNumPart - 1) / 6);
           femaleCol = (femaleNumPart - 1) % 6;
-          seatCol = (numPart - 1) % 6;
         }
         
-        // Check if they're in the same row and adjacent columns
-        return rowNum === femaleRow && Math.abs(seatCol - femaleCol) === 1;
-      });
+        // Female row (Only look at first 2 rows)
+        const femaleRow = Math.floor((femaleNumPart - 1) / 
+          (currentBus?.layout === "all-seater" ? 12 : 
+          (currentBus?.layout === "2+1-sleeper-seater" || currentBus?.layout === "seater-sleeper") ? 
+          (femaleNumPart <= 24 ? 12 : 6) : 6));
+        
+        if (femaleRow >= 2) {
+          return false; // No restrictions from females in third row
+        }
+        
+        // Check if they're in the same column (and both are in the first two rows)
+        return seatCol === femaleCol && rowNum < 2 && femaleRow < 2;
+      }).length > 0;
   };
   
   const handleSeatSelect = (seat: Seat) => {
@@ -376,11 +390,11 @@ const SeatSelectionPage = () => {
       // If seat is already selected, unselect it
       setSelectedSeats(prev => prev.filter(s => s.id !== seat.id));
     } else if (selectedSeats.length < 6) {
-      // Check for female restriction on adjacent seats
+      // Check for female restriction on adjacent seats in the same column
       if (isAdjacentToFemaleBookedSeat(seat)) {
         toast({
           title: "Seating Restriction",
-          description: "This seat can only be booked by a female passenger due to an adjacent female passenger.",
+          description: "This seat can only be booked by a female passenger due to female passengers in the same column.",
           variant: "default",
         });
         
@@ -450,14 +464,18 @@ const SeatSelectionPage = () => {
         </button>
         
         <div className="card mb-8">
-          <h1 className="text-2xl font-serif mb-4">{currentBus.name}</h1>
+          <h1 className="text-2xl font-serif mb-4">{currentBus?.name}</h1>
           <div className="flex flex-wrap gap-3">
-            <div className="px-2 py-1 bg-far-cream text-far-black/70 text-sm rounded">{currentBus.type}</div>
-            <div className="px-2 py-1 bg-far-cream text-far-black/70 text-sm rounded">{currentBus.category}</div>
+            <div className="px-2 py-1 bg-far-cream text-far-black/70 text-sm rounded">{currentBus?.type}</div>
             <div className="px-2 py-1 bg-far-cream text-far-black/70 text-sm rounded">
-              {currentBus.departureTime} - {currentBus.arrivalTime}
+              {currentBus?.category === "Seater" && ["2+1-sleeper-seater", "seater-sleeper"].includes(currentBus?.layout || "") 
+                ? "Seater + Sleeper" 
+                : currentBus?.category}
             </div>
-            <div className="px-2 py-1 bg-far-cream text-far-black/70 text-sm rounded">{currentBus.duration}</div>
+            <div className="px-2 py-1 bg-far-cream text-far-black/70 text-sm rounded">
+              {currentBus?.departureTime} - {currentBus?.arrivalTime}
+            </div>
+            <div className="px-2 py-1 bg-far-cream text-far-black/70 text-sm rounded">{currentBus?.duration}</div>
           </div>
         </div>
         

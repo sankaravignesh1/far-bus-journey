@@ -42,7 +42,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
       seatId: seat.id,
       name: "",
       age: "",
-      gender: "male",
+      gender: (seat as any).requiresFemale ? "female" : "male",
       seatNumber: seat.number,
       requiresFemale: (seat as any).requiresFemale
     }))
@@ -57,7 +57,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
           if (field === "gender" && p.requiresFemale && value === "male") {
             toast({
               title: "Gender Restriction",
-              description: `Seat ${p.seatNumber} can only be booked for a female passenger due to adjacent female booking.`,
+              description: `Seat ${p.seatNumber} can only be booked for a female passenger due to female passengers in the same column.`,
               variant: "destructive",
             });
             return p; // Don't update, keep as female
@@ -80,7 +80,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
     if (invalidGenderAssignment) {
       toast({
         title: "Gender Restriction",
-        description: "Some seats can only be booked for female passengers due to adjacent female bookings.",
+        description: "Some seats can only be booked for female passengers due to female passengers in the same column.",
         variant: "destructive",
       });
       return;
@@ -159,7 +159,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
                   </select>
                   {passenger.requiresFemale && (
                     <p className="text-xs text-pink-700 mt-1">
-                      Due to an adjacent female booking, this seat can only be booked for a female passenger.
+                      Due to female passengers in the same column, this seat can only be booked for a female passenger.
                     </p>
                   )}
                 </div>

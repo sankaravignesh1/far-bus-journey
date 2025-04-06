@@ -43,13 +43,14 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
   const getSeatClasses = (seat: Seat) => {
     const status = getSeatStatus(seat);
     
-    let classes = 'flex items-center justify-center text-xs font-medium cursor-pointer rounded-md ';
+    // Base classes - making sure seats don't shrink on mobile
+    let classes = 'flex items-center justify-center text-xs font-medium cursor-pointer rounded-md min-w-[32px] md:min-w-[36px] ';
     
     // Adjust height based on seat type and position
     if (seat.type === "Sleeper") {
-      classes += 'h-12 '; // Sleeper seats are taller
+      classes += 'h-12 min-h-[48px] '; // Sleeper seats are taller with minimum height
     } else {
-      classes += 'h-10 '; // Seater seats are shorter
+      classes += 'h-10 min-h-[40px] '; // Seater seats are shorter with minimum height
     }
     
     // Adjust width based on row position for custom layouts
@@ -145,8 +146,8 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
                 <div 
                   key={`${deckType}-${rowIndex}-${colIndex}`} 
                   className={`relative ${!seat ? 'opacity-0' : ''} ${
-                    // Add increased pathway between rows 2 and 3
-                    rowIndex === 2 ? 'mt-8' : ''
+                    // Increased pathway between rows 2 and 3
+                    rowIndex === 2 ? 'mt-12' : ''
                   }`}
                 >
                   {seat && (
@@ -225,8 +226,8 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
           ))}
         </div>
         
-        {/* Spacer - pathway */}
-        <div className="h-8"></div>
+        {/* Spacer - pathway - increased height */}
+        <div className="h-12"></div>
         
         {/* Third row - 1x12 grid (seater format) */}
         <div className="grid grid-cols-12 gap-1">
@@ -306,8 +307,8 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
           ))}
         </div>
         
-        {/* Spacer - pathway */}
-        <div className="h-8"></div>
+        {/* Spacer - pathway - increased height */}
+        <div className="h-12"></div>
         
         {/* Third row - 1x12 grid (also seater) */}
         <div className="grid grid-cols-12 gap-1">
@@ -387,8 +388,8 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
           ))}
         </div>
         
-        {/* Spacer - pathway */}
-        <div className="h-8"></div>
+        {/* Spacer - pathway - increased height */}
+        <div className="h-12"></div>
         
         {/* Third row - 1x6 grid */}
         <div className="grid grid-cols-6 gap-2">
