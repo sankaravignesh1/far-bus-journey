@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Seat, BoardingPoint, DroppingPoint } from '../types';
 import { Check } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from '../hooks/use-mobile';
 
 interface PassengerFormProps {
   selectedSeats: Seat[];
@@ -33,6 +34,8 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
 }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
+  
   const [contactEmail, setContactEmail] = useState("");
   const [contactMobile, setContactMobile] = useState("");
   const [selectedBoardingPoint, setSelectedBoardingPoint] = useState<string>("");

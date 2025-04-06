@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Seat } from '../types';
 import { Info, HelpCircle, ArrowRight } from 'lucide-react';
@@ -43,7 +42,7 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
   const getSeatClasses = (seat: Seat) => {
     const status = getSeatStatus(seat);
     
-    // Base classes - making sure seats don't shrink on mobile
+    // Base classes - making sure seats don't shrink on mobile with fixed width and height
     let classes = 'flex items-center justify-center text-xs font-medium cursor-pointer rounded-md min-w-[32px] md:min-w-[36px] ';
     
     // Adjust height based on seat type and position
@@ -139,7 +138,7 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
           </div>
         </div>
         
-        <div className="grid grid-cols-6 gap-2 mt-3">
+        <div className="grid grid-cols-6 gap-1 sm:gap-2 mt-3 mx-auto max-w-md">
           {grid.map((row, rowIndex) => (
             <React.Fragment key={`${deckType}-row-${rowIndex}`}>
               {row.map((seat, colIndex) => (
@@ -147,7 +146,7 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
                   key={`${deckType}-${rowIndex}-${colIndex}`} 
                   className={`relative ${!seat ? 'opacity-0' : ''} ${
                     // Increased pathway between rows 2 and 3
-                    rowIndex === 2 ? 'mt-12' : ''
+                    rowIndex === 2 ? 'mt-16' : ''
                   }`}
                 >
                   {seat && (
@@ -205,8 +204,8 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
           </div>
         </div>
         
-        {/* First two rows - 2x6 grid */}
-        <div className="grid grid-cols-6 gap-2">
+        {/* First two rows - 2x6 grid - ensure consistent width on mobile */}
+        <div className="grid grid-cols-6 gap-1 sm:gap-2 mx-auto max-w-md">
           {firstTwoRows.map((seat, index) => (
             <div 
               key={`lower-mixed-${index}`}
@@ -227,10 +226,10 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
         </div>
         
         {/* Spacer - pathway - increased height */}
-        <div className="h-12"></div>
+        <div className="h-16"></div>
         
-        {/* Third row - 1x12 grid (seater format) */}
-        <div className="grid grid-cols-12 gap-1">
+        {/* Third row - 1x12 grid (seater format) - ensure equal cells on mobile */}
+        <div className="grid grid-cols-12 gap-1 mx-auto max-w-md">
           {thirdRow.map((seat, index) => (
             <div 
               key={`lower-mixed-third-${index}`}
@@ -286,8 +285,8 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
           </div>
         </div>
         
-        {/* First two rows - 2x12 grid */}
-        <div className="grid grid-cols-12 gap-1">
+        {/* First two rows - 2x12 grid - ensure fixed width on mobile */}
+        <div className="grid grid-cols-12 gap-1 mx-auto max-w-md">
           {firstTwoRows.map((seat, index) => (
             <div 
               key={`lower-seater-${index}`}
@@ -308,10 +307,10 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
         </div>
         
         {/* Spacer - pathway - increased height */}
-        <div className="h-12"></div>
+        <div className="h-16"></div>
         
-        {/* Third row - 1x12 grid (also seater) */}
-        <div className="grid grid-cols-12 gap-1">
+        {/* Third row - 1x12 grid (also seater) - ensure equal cells on mobile */}
+        <div className="grid grid-cols-12 gap-1 mx-auto max-w-md">
           {thirdRow.map((seat, index) => (
             <div 
               key={`lower-seater-third-${index}`}
@@ -367,8 +366,8 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
           </div>
         </div>
         
-        {/* First two rows - 2x12 grid */}
-        <div className="grid grid-cols-12 gap-1">
+        {/* First two rows - 2x12 grid - ensure fixed width on mobile */}
+        <div className="grid grid-cols-12 gap-1 mx-auto max-w-md">
           {firstTwoRows.map((seat, index) => (
             <div 
               key={`lower-seatersleeper-${index}`}
@@ -389,10 +388,10 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
         </div>
         
         {/* Spacer - pathway - increased height */}
-        <div className="h-12"></div>
+        <div className="h-16"></div>
         
-        {/* Third row - 1x6 grid */}
-        <div className="grid grid-cols-6 gap-2">
+        {/* Third row - 1x6 grid - ensure equal cells on mobile */}
+        <div className="grid grid-cols-6 gap-1 sm:gap-2 mx-auto max-w-md">
           {thirdRow.map((seat, index) => (
             <div 
               key={`lower-seatersleeper-third-${index}`}
@@ -491,13 +490,13 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
           <div className="mt-3 text-sm text-far-black/70">
             <p className="flex items-center">
               <HelpCircle className="h-4 w-4 mr-1 inline-block text-far-black" />
-              If a female passenger is seated in rows 1-2, the adjacent seats (same row) can only be booked by female passengers.
+              If a female passenger is seated in rows 1-2, the adjacent seats (same column) can only be booked by female passengers.
             </p>
           </div>
         </div>
       )}
       
-      <div className="bg-white border border-far-lightgray rounded-lg p-6">
+      <div className="bg-white border border-far-lightgray rounded-lg p-4 sm:p-6">
         {/* Render Lower Deck first - matching the requirement */}
         {renderDeck(lowerDeckSeats, 'lower')}
         
