@@ -81,6 +81,10 @@
     @apply w-10 h-10 border cursor-pointer flex items-center justify-center text-sm font-medium transition-all;
   }
 
+  .sleeper-seat {
+    @apply border cursor-pointer transition-all duration-150 w-full py-3 px-2;
+  }
+
   .seat-available {
     @apply bg-white border-far-gray hover:border-far-green;
   }

@@ -5,7 +5,7 @@ import SeatSelection from '../components/SeatSelection';
 import PassengerForm from '../components/PassengerForm';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Seat, Bus } from '../types';
-import { buses, generateSeats, boardingPoints, droppingPoints } from '../data/mockData';
+import { buses, boardingPoints, droppingPoints } from '../data/mockData';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 const SeatSelectionPage = () => {
@@ -27,14 +27,70 @@ const SeatSelectionPage = () => {
       const bus = buses.find(b => b.id === busId);
       if (bus) {
         setCurrentBus(bus);
-        // Generate seats for this bus
-        const seats = generateSeats(busId, bus.category, bus.layout);
+        // Generate the 3x7 grid for both decks
+        const seats = generateTwoDeckSleeperSeats(busId);
         console.log("Generated seats:", seats);
         setAvailableSeats(seats);
       }
       setLoading(false);
     }
   }, [busId]);
+  
+  // New function to generate the 3x7 grid layout for both decks
+  const generateTwoDeckSleeperSeats = (busId: string): Seat[] => {
+    const seats: Seat[] = [];
+    const rows = 3;
+    const cols = 7;
+    const totalSeatsPerDeck = rows * cols;
+    
+    // Generate lower deck seats (L01 to L21)
+    for (let i = 1; i <= totalSeatsPerDeck; i++) {
+      const seatNumber = `L${i.toString().padStart(2, '0')}`;
+      
+      // Randomize some seats as booked or female_booked for demonstration
+      let status: 'available' | 'booked' | 'female_booked' = 'available';
+      const random = Math.random();
+      if (random < 0.2) {
+        status = 'booked';
+      } else if (random < 0.3) {
+        status = 'female_booked';
+      }
+      
+      seats.push({
+        id: `${busId}-${seatNumber}`,
+        number: seatNumber,
+        type: "Sleeper",
+        status: status,
+        position: "double", // Default to double position
+        deck: "lower"
+      });
+    }
+    
+    // Generate upper deck seats (U01 to U21)
+    for (let i = 1; i <= totalSeatsPerDeck; i++) {
+      const seatNumber = `U${i.toString().padStart(2, '0')}`;
+      
+      // Randomize some seats as booked or female_booked
+      let status: 'available' | 'booked' | 'female_booked' = 'available';
+      const random = Math.random();
+      if (random < 0.2) {
+        status = 'booked';
+      } else if (random < 0.3) {
+        status = 'female_booked';
+      }
+      
+      seats.push({
+        id: `${busId}-${seatNumber}`,
+        number: seatNumber,
+        type: "Sleeper",
+        status: status,
+        position: "double", // Default to double position
+        deck: "upper"
+      });
+    }
+    
+    return seats;
+  };
   
   const handleSeatSelect = (seat: Seat) => {
     if (selectedSeats.some(s => s.id === seat.id)) {
@@ -43,35 +99,29 @@ const SeatSelectionPage = () => {
     } else if (selectedSeats.length < 6) {
       // If seat is not selected and we haven't reached the limit, select it
       // Check for gender restriction on adjacent seats
-      const isDoublePosition = seat.position === "double";
-      const isFemaleRestricted = isDoublePosition && 
-                                availableSeats
-                                  .filter(s => s.status === "female_booked")
-                                  .some(s => {
-                                    // Check if this is an adjacent seat (based on seat number pattern)
-                                    const seatNum = seat.number;
-                                    const femaleNum = s.number;
-                                    
-                                    // For sleeper layouts, seats are typically numbered like L11, L12 where L11 and L12 are adjacent
-                                    if (seatNum.length === 3 && femaleNum.length === 3) {
-                                      const seatPrefix = seatNum.charAt(0);
-                                      const femalePrefix = femaleNum.charAt(0);
-                                      
-                                      if (seatPrefix === femalePrefix) {
-                                        const seatRow = seatNum.charAt(1);
-                                        const femaleRow = femaleNum.charAt(1);
-                                        
-                                        if (seatRow === femaleRow) {
-                                          const seatCol = parseInt(seatNum.charAt(2));
-                                          const femaleCol = parseInt(femaleNum.charAt(2));
-                                          
-                                          return Math.abs(seatCol - femaleCol) === 1 && seatCol % 3 !== 0 && femaleCol % 3 !== 0;
-                                        }
-                                      }
-                                    }
-                                    
-                                    return false;
-                                  });
+      const isFemaleRestricted = availableSeats
+        .filter(s => s.status === "female_booked")
+        .some(s => {
+          // For our grid layout, we need to check if seats are adjacent
+          const seatNum = seat.number;
+          const femaleNum = s.number;
+          
+          // Check if they're on the same deck
+          if (seatNum[0] === femaleNum[0]) {
+            const seatIndex = parseInt(seatNum.substring(1));
+            const femaleIndex = parseInt(femaleNum.substring(1));
+            
+            // Check if they're in the same row and adjacent columns
+            // For a 7-column layout
+            const seatRow = Math.floor((seatIndex - 1) / 7);
+            const seatCol = (seatIndex - 1) % 7;
+            const femaleRow = Math.floor((femaleIndex - 1) / 7);
+            const femaleCol = (femaleIndex - 1) % 7;
+            
+            return seatRow === femaleRow && Math.abs(seatCol - femaleCol) === 1;
+          }
+          return false;
+        });
       
       if (isFemaleRestricted) {
         alert("This seat can only be booked by a female passenger due to an adjacent female passenger.");
