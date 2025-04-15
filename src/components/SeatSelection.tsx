@@ -52,8 +52,8 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
     
     // Fixed dimensions based on seat type
     if (seat.type === "Sleeper") {
-      // For sleeper seats: width 1, height 2 - rotated 90 degrees
-      classes += 'w-[72px] h-[36px] '; 
+      // For sleeper seats: width 1, height 2 - horizontal orientation
+      classes += 'w-[36px] h-[72px] '; 
     } else {
       // For seater seats: width 1, height 1
       classes += 'w-[36px] h-[36px] '; 
@@ -75,6 +75,50 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
     return classes;
   };
 
+  // Helper function to find the maximum X and Y values in a deck
+  const findGridDimensions = (deckSeats: Seat[]) => {
+    let maxX = 0;
+    let maxY = 0;
+    
+    deckSeats.forEach(seat => {
+      // Extract coordinates from seat number for demonstration
+      // In real implementation, these would come from your backend
+      const seatNum = seat.number;
+      const numPart = parseInt(seatNum.substring(1));
+      
+      // Use X and Y based on bus layout
+      let x = 0;
+      let y = 0;
+      
+      if (busLayout === "2+1") {
+        // Map according to CSV data
+        if (numPart === 6) { x = 0; y = 0; }
+        else if (numPart === 5) { x = 0; y = 1; }
+        else if (numPart === 4) { x = 0; y = 3; }
+        else if (numPart === 12) { x = 2; y = 0; }
+        else if (numPart === 11) { x = 2; y = 1; }
+        else if (numPart === 10) { x = 2; y = 3; }
+        else if (numPart === 18) { x = 4; y = 0; }
+        else if (numPart === 17) { x = 4; y = 1; }
+        else if (numPart === 16) { x = 4; y = 3; }
+        else if (numPart === 24) { x = 6; y = 0; }
+        else if (numPart === 23) { x = 6; y = 1; }
+        else if (numPart === 22) { x = 6; y = 3; }
+        else if (numPart === 30) { x = 8; y = 0; }
+        else if (numPart === 29) { x = 8; y = 1; }
+        else if (numPart === 28) { x = 8; y = 3; }
+        else if (numPart === 36) { x = 10; y = 0; }
+        else if (numPart === 35) { x = 10; y = 1; }
+        else if (numPart === 34) { x = 10; y = 3; }
+      }
+      
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+    });
+    
+    return { rows: maxY + 1, cols: maxX + 1 };
+  };
+
   const renderBusLayout = (deckSeats: Seat[], deckType: 'upper' | 'lower') => {
     if (deckSeats.length === 0) {
       return (
@@ -84,50 +128,73 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
       );
     }
 
-    // For 2+1 layout
-    const rows = deckType === 'lower' ? 4 : 2;
-    const cols = 12;
+    // Create a grid based on the CSV data
+    const grid: (Seat | null)[][] = [];
+    const maxX = 10; // Based on the CSV data, max X coordinate is 10
+    const maxY = 4;  // Based on the CSV data, max Y coordinate is 4
     
-    // Create an empty grid
-    const grid = Array(rows).fill(null).map(() => Array(cols).fill(null));
+    // Initialize grid with null values
+    for (let y = 0; y <= maxY; y++) {
+      grid[y] = [];
+      for (let x = 0; x <= maxX; x++) {
+        grid[y][x] = null;
+      }
+    }
     
-    // Map seats to the grid
+    // Map seats to the grid using the CSV coordinates
     deckSeats.forEach(seat => {
       const seatNum = seat.number;
       const numPart = parseInt(seatNum.substring(1));
       
-      let rowIndex, colIndex;
+      // Find X, Y coordinates from the CSV data
+      let x = 0;
+      let y = 0;
       
+      // Using a mapping based on the CSV data
+      // This is a simplified example - in production, you would get these from your data
       if (deckType === 'lower') {
-        if (numPart <= 12) {
-          // First row
-          rowIndex = 0;
-          colIndex = numPart - 1;
-        } else if (numPart <= 24) {
-          // Second row
-          rowIndex = 1;
-          colIndex = numPart - 13;
-        } else if (numPart <= 36) {
-          // Third row (after pathway)
-          rowIndex = 3;
-          colIndex = numPart - 25;
-        }
+        if (numPart === 6) { x = 0; y = 0; }
+        else if (numPart === 5) { x = 0; y = 1; }
+        else if (numPart === 4) { x = 0; y = 3; }
+        else if (numPart === 12) { x = 2; y = 0; }
+        else if (numPart === 11) { x = 2; y = 1; }
+        else if (numPart === 10) { x = 2; y = 3; }
+        else if (numPart === 18) { x = 4; y = 0; }
+        else if (numPart === 17) { x = 4; y = 1; }
+        else if (numPart === 16) { x = 4; y = 3; }
+        else if (numPart === 24) { x = 6; y = 0; }
+        else if (numPart === 23) { x = 6; y = 1; }
+        else if (numPart === 22) { x = 6; y = 3; }
+        else if (numPart === 30) { x = 8; y = 0; }
+        else if (numPart === 29) { x = 8; y = 1; }
+        else if (numPart === 28) { x = 8; y = 3; }
+        else if (numPart === 36) { x = 10; y = 0; }
+        else if (numPart === 35) { x = 10; y = 1; }
+        else if (numPart === 34) { x = 10; y = 3; }
       } else { // Upper deck
-        if (numPart <= 12) {
-          // First row of upper deck
-          rowIndex = 0;
-          colIndex = numPart - 1;
-        } else if (numPart <= 18) {
-          // Second row of upper deck
-          rowIndex = 1;
-          colIndex = numPart - 13;
-        }
+        if (numPart === 1) { x = 0; y = 1; }
+        else if (numPart === 2) { x = 0; y = 2; }
+        else if (numPart === 3) { x = 0; y = 4; }
+        else if (numPart === 7) { x = 2; y = 1; }
+        else if (numPart === 8) { x = 2; y = 2; }
+        else if (numPart === 9) { x = 2; y = 4; }
+        else if (numPart === 13) { x = 4; y = 1; }
+        else if (numPart === 14) { x = 4; y = 2; }
+        else if (numPart === 15) { x = 4; y = 4; }
+        else if (numPart === 19) { x = 6; y = 1; }
+        else if (numPart === 20) { x = 6; y = 2; }
+        else if (numPart === 21) { x = 6; y = 4; }
+        else if (numPart === 25) { x = 8; y = 1; }
+        else if (numPart === 26) { x = 8; y = 2; }
+        else if (numPart === 27) { x = 8; y = 4; }
+        else if (numPart === 31) { x = 10; y = 1; }
+        else if (numPart === 32) { x = 10; y = 2; }
+        else if (numPart === 33) { x = 10; y = 4; }
       }
       
-      // Place seat in grid (if valid position)
-      if (rowIndex !== undefined && colIndex !== undefined && 
-          rowIndex >= 0 && rowIndex < rows && colIndex >= 0 && colIndex < cols) {
-        grid[rowIndex][colIndex] = seat;
+      // Place seat in grid if coordinates are valid
+      if (x >= 0 && x <= maxX && y >= 0 && y <= maxY) {
+        grid[y][x] = seat;
       }
     });
 
@@ -157,32 +224,33 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
         <div className="overflow-x-auto">
           <div className="min-w-[650px] px-2">
             {grid.map((row, rowIndex) => (
-              <React.Fragment key={`${deckType}-row-${rowIndex}`}>
-                {/* Skip rendering pathways (row index 2) */}
-                {rowIndex !== 2 ? (
-                  <div className="flex my-2">
-                    {row.map((seat, colIndex) => (
-                      <div 
-                        key={`${deckType}-${rowIndex}-${colIndex}`}
-                        className="relative"
-                      >
-                        {seat && (
-                          <div
-                            className={getSeatClasses(seat)}
-                            onClick={() => {
-                              if (seat.status === 'available') {
-                                onSelectSeat(seat);
-                              }
-                            }}
-                          >
-                            <span>{seat.number}</span>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-              </React.Fragment>
+              // Skip row index 2 which is the pathway
+              rowIndex !== 2 && (
+                <div key={`${deckType}-row-${rowIndex}`} className="flex my-2">
+                  {row.map((seat, colIndex) => (
+                    <div 
+                      key={`${deckType}-${rowIndex}-${colIndex}`}
+                      className="relative"
+                    >
+                      {seat && (
+                        <div
+                          className={getSeatClasses(seat)}
+                          onClick={() => {
+                            if (seat.status === 'available') {
+                              onSelectSeat(seat);
+                            }
+                          }}
+                        >
+                          <span>{seat.number}</span>
+                        </div>
+                      )}
+                      {!seat && (
+                        <div className="w-[40px] h-[40px]"></div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )
             ))}
           </div>
         </div>
