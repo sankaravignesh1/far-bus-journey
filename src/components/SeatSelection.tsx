@@ -46,20 +46,20 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
   const getSeatClasses = (seat: Seat) => {
     const status = getSeatStatus(seat);
     
-    // Base classes - fixed dimensions that won't shrink on mobile
+    // Base classes
     let classes = 'flex items-center justify-center text-xs font-medium cursor-pointer rounded-md ';
     
-    // Adjust dimensions based on seat type
+    // Fixed dimensions that won't shrink on mobile
     if (seat.type === "Sleeper") {
-      // Sleeper seats are wider and taller (spanning 2 rows)
-      classes += 'w-[36px] h-[48px] '; 
+      // Sleeper seats are same width but taller (height: 2 units)
+      classes += 'w-[36px] h-[72px] '; 
     } else {
-      // Seater seats are squared (1x1)
+      // Seater seats are square (width: 1, height: 1)
       classes += 'w-[36px] h-[36px] '; 
     }
     
     // Add spacing between seats
-    classes += 'mx-[2px] ';
+    classes += 'mx-[2px] my-[2px] ';
     
     if (status === 'available') {
       classes += 'bg-white border border-gray-300 hover:border-far-green ';
@@ -74,26 +74,6 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
     return classes;
   };
 
-  // Helper function to determine row from seat number
-  const getRowFromSeatNumber = (seatNum: string) => {
-    const deckPrefix = seatNum.substring(0, 1);
-    const numPart = parseInt(seatNum.substring(1));
-    
-    // Enhanced layout with more rows
-    if (busLayout === "all-seater") {
-      // For all-seater: 12 seats per row
-      return Math.floor((numPart - 1) / 12);
-    } else if (busLayout === "2+1-sleeper-seater" || busLayout === "seater-sleeper") {
-      // For mixed layouts
-      if (numPart <= 12) return 0;
-      else if (numPart <= 24) return 1;
-      else return 2;
-    } else {
-      // Default 6 seats per row layout
-      return Math.floor((numPart - 1) / 6);
-    }
-  };
-
   const renderExtendedBusLayout = (deckSeats: Seat[], deckType: 'upper' | 'lower') => {
     if (deckSeats.length === 0) {
       return (
@@ -103,56 +83,43 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
       );
     }
 
-    // Enhanced 5x12 grid layout
-    const rows = 5; // Maximum of 5 rows
-    const cols = 12; // Maximum of 12 columns
+    // Create a 5-row by 12-column grid structure
+    const rows = 5;
+    const cols = 12;
     
     // Create an empty grid
     const grid = Array(rows).fill(null).map(() => Array(cols).fill(null));
     
-    // Map seats to the grid based on the predetermined pattern
+    // Map seats to the grid
     deckSeats.forEach(seat => {
       const seatNum = seat.number;
-      const deckPrefix = deckType === 'lower' ? 'L' : 'U';
+      const deckPrefix = seatNum.substring(0, 1);
+      const numPart = parseInt(seatNum.substring(1));
       
-      if (seatNum.startsWith(deckPrefix)) {
-        const numPart = parseInt(seatNum.substring(1));
-        
-        // Custom mapping based on the 2+1 layout
-        // First row (0-based index): seats 1-6
-        // Second row: seats 7-12
-        // Third row: empty (pathway)
-        // Fourth row: seats 13-18
-        // Fifth row: seats 19-24
-        
-        let row = 0;
-        let col = 0;
-        
-        if (numPart <= 6) {
-          // First row
-          row = 0;
-          col = numPart - 1;
-        } else if (numPart <= 12) {
-          // Second row
-          row = 1;
-          col = numPart - 7;
-        } else if (numPart <= 18) {
-          // Fourth row (third is pathway)
-          row = 3;
-          col = numPart - 13;
-        } else if (numPart <= 24) {
-          // Fifth row
-          row = 4;
-          col = numPart - 19;
-        }
-        
-        // For 2+1 layout, leave last three columns empty for single seats
-        if (col < 9) {
-          grid[row][col] = seat;
-        } else if (col >= 9 && col < 12) {
-          // Single seat area (for the "+1" in "2+1")
-          grid[row][11] = seat; // Place in last column
-        }
+      let rowIndex, colIndex;
+      
+      // Enhanced placement logic based on seat number
+      if (numPart <= 12) {
+        // First row
+        rowIndex = 0;
+        colIndex = numPart - 1;
+      } else if (numPart <= 24) {
+        // Second row
+        rowIndex = 1;
+        colIndex = numPart - 13;
+      } else if (numPart <= 36) {
+        // Fourth row (skip third row for pathway)
+        rowIndex = 3;
+        colIndex = numPart - 25;
+      } else {
+        // Fifth row
+        rowIndex = 4;
+        colIndex = numPart - 37;
+      }
+      
+      // Place seat in grid (if valid position)
+      if (rowIndex >= 0 && rowIndex < rows && colIndex >= 0 && colIndex < cols) {
+        grid[rowIndex][colIndex] = seat;
       }
     });
 
@@ -169,32 +136,17 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
         </div>
         
         {/* Scrollable seat layout container with horizontal scroll for mobile */}
-        <div className="overflow-x-auto pb-4">
-          <div className="min-w-[600px]">
+        <ScrollArea className="w-full" orientation="horizontal">
+          <div className="min-w-[600px] px-4">
             {grid.map((row, rowIndex) => (
               <React.Fragment key={`${deckType}-row-${rowIndex}`}>
-                {/* Skip the third row (index 2) as it's the pathway */}
-                {rowIndex === 2 ? (
-                  // Pathway row - special styling
-                  <div className="flex space-x-1 my-4">
-                    {Array(12).fill(null).map((_, colIndex) => (
-                      <div 
-                        key={`${deckType}-pathway-${colIndex}`}
-                        className="h-8 w-[36px] bg-blue-50 border border-dashed border-blue-200 rounded-md flex items-center justify-center"
-                      >
-                        {colIndex === 5 && (
-                          <span className="text-[8px] text-blue-600 font-medium">Pathway</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  // Regular rows with seats
-                  <div className="flex space-x-1 my-1">
+                {/* Skip rendering the third row (index 2) as it's the pathway */}
+                {rowIndex !== 2 ? (
+                  <div className="flex my-1">
                     {row.map((seat, colIndex) => (
                       <div 
                         key={`${deckType}-${rowIndex}-${colIndex}`}
-                        className={`relative ${!seat ? 'opacity-0' : ''}`}
+                        className="relative"
                       >
                         {seat && (
                           <div
@@ -205,20 +157,25 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
                               }
                             }}
                           >
-                            <span className="text-[9px]">{seat.number}</span>
-                            <span className="text-[6px] opacity-70">
-                              ({rowIndex},{colIndex},{deckType === 'lower' ? '0' : '1'})
+                            <span>{seat.number}</span>
+                            <span className="text-[6px] absolute bottom-1 opacity-60">
+                              ({colIndex},{rowIndex},{deckType === 'lower' ? '0' : '1'})
                             </span>
                           </div>
                         )}
                       </div>
                     ))}
                   </div>
+                ) : (
+                  // Empty space for pathway row - just add margin
+                  <div className="h-8 my-2 flex items-center pl-4">
+                    <div className="text-[10px] text-blue-600 font-medium">Pathway</div>
+                  </div>
                 )}
               </React.Fragment>
             ))}
           </div>
-        </div>
+        </ScrollArea>
       </div>
     );
   };
