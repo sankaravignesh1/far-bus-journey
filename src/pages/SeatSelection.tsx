@@ -44,8 +44,108 @@ const SeatSelectionPage = () => {
       case "seater-sleeper":
         return generateSeaterSleeperLayout(busId);
       default:
-        return generateTwoDeckSleeperSeats(busId);
+        return generateEnhancedBusLayout(busId);
     }
+  };
+  
+  const generateEnhancedBusLayout = (busId: string): Seat[] => {
+    const seats: Seat[] = [];
+    const rows = 5;
+    const seatsPerRow = 6;
+    
+    for (let row = 0; row < 2; row++) {
+      for (let col = 0; col < seatsPerRow; col++) {
+        const seatNumber = `L${(row * seatsPerRow + col + 1).toString().padStart(2, '0')}`;
+        
+        let status: 'available' | 'booked' | 'female_booked' = 'available';
+        const random = Math.random();
+        if (random < 0.15) {
+          status = 'booked';
+        } else if (random < 0.25) {
+          status = 'female_booked';
+        }
+        
+        seats.push({
+          id: `${busId}-${seatNumber}`,
+          number: seatNumber,
+          type: "Sleeper",
+          status: status,
+          position: col < seatsPerRow - 1 ? "double" : "single",
+          deck: "lower"
+        });
+      }
+    }
+    
+    for (let row = 3; row < 5; row++) {
+      for (let col = 0; col < seatsPerRow; col++) {
+        const seatNumber = `L${((row - 1) * seatsPerRow + col + 1).toString().padStart(2, '0')}`;
+        
+        let status: 'available' | 'booked' | 'female_booked' = 'available';
+        const random = Math.random();
+        if (random < 0.15) {
+          status = 'booked';
+        } else if (random < 0.25) {
+          status = 'female_booked';
+        }
+        
+        seats.push({
+          id: `${busId}-${seatNumber}`,
+          number: seatNumber,
+          type: "Sleeper",
+          status: status,
+          position: col < seatsPerRow - 1 ? "double" : "single",
+          deck: "lower"
+        });
+      }
+    }
+    
+    for (let row = 0; row < 2; row++) {
+      for (let col = 0; col < seatsPerRow; col++) {
+        const seatNumber = `U${(row * seatsPerRow + col + 1).toString().padStart(2, '0')}`;
+        
+        let status: 'available' | 'booked' | 'female_booked' = 'available';
+        const random = Math.random();
+        if (random < 0.15) {
+          status = 'booked';
+        } else if (random < 0.25) {
+          status = 'female_booked';
+        }
+        
+        seats.push({
+          id: `${busId}-${seatNumber}`,
+          number: seatNumber,
+          type: "Sleeper",
+          status: status,
+          position: col < seatsPerRow - 1 ? "double" : "single",
+          deck: "upper"
+        });
+      }
+    }
+    
+    for (let row = 3; row < 5; row++) {
+      for (let col = 0; col < seatsPerRow; col++) {
+        const seatNumber = `U${((row - 1) * seatsPerRow + col + 1).toString().padStart(2, '0')}`;
+        
+        let status: 'available' | 'booked' | 'female_booked' = 'available';
+        const random = Math.random();
+        if (random < 0.15) {
+          status = 'booked';
+        } else if (random < 0.25) {
+          status = 'female_booked';
+        }
+        
+        seats.push({
+          id: `${busId}-${seatNumber}`,
+          number: seatNumber,
+          type: "Sleeper",
+          status: status,
+          position: col < seatsPerRow - 1 ? "double" : "single",
+          deck: "upper"
+        });
+      }
+    }
+    
+    return seats;
   };
   
   const generateTwoDeckSleeperSeats = (busId: string): Seat[] => {
@@ -299,7 +399,8 @@ const SeatSelectionPage = () => {
         (numPart <= 24 ? 12 : 6));
       seatCol = rowNum < 2 ? (numPart - 1) % 12 : (numPart - 1) % 6;
     } else {
-      seatCol = (numPart - 1) % 6;
+      const effectiveNum = numPart > 12 ? numPart - 6 : numPart;
+      seatCol = (effectiveNum - 1) % 6;
     }
     
     const rowNum = Math.floor((numPart - 1) / 
@@ -333,7 +434,8 @@ const SeatSelectionPage = () => {
             (femaleNumPart <= 24 ? 12 : 6));
           femaleCol = femaleRow < 2 ? (femaleNumPart - 1) % 12 : (femaleNumPart - 1) % 6;
         } else {
-          femaleCol = (femaleNumPart - 1) % 6;
+          const effectiveFemaleNum = femaleNumPart > 12 ? femaleNumPart - 6 : femaleNumPart;
+          femaleCol = (effectiveFemaleNum - 1) % 6;
         }
         
         const femaleRow = Math.floor((femaleNumPart - 1) / 

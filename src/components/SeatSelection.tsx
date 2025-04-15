@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Seat } from '../types';
 import { Info, HelpCircle, ArrowRight } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface SeatSelectionProps {
   seats: Seat[];
@@ -81,7 +82,7 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
     const deckPrefix = seatNum.substring(0, 1);
     const numPart = parseInt(seatNum.substring(1));
     
-    // Layout depends on bus type
+    // Enhanced layout with more rows
     if (busLayout === "all-seater") {
       // For all-seater: 12 seats per row
       return Math.floor((numPart - 1) / 12);
@@ -94,6 +95,136 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
       // Default 6 seats per row layout
       return Math.floor((numPart - 1) / 6);
     }
+  };
+
+  const renderExtendedBusLayout = (deckSeats: Seat[], deckType: 'upper' | 'lower') => {
+    if (deckSeats.length === 0) {
+      return (
+        <div className="py-4 text-center text-gray-500">
+          No seats available for this deck
+        </div>
+      );
+    }
+
+    // Enhanced 5x12 grid layout
+    const rows = 5; // Maximum of 5 rows
+    const cols = 12; // Maximum of 12 columns
+    
+    // Create an empty grid
+    const grid = Array(rows).fill(null).map(() => Array(cols).fill(null));
+    
+    // Map seats to the grid based on the predetermined pattern
+    deckSeats.forEach(seat => {
+      const seatNum = seat.number;
+      const deckPrefix = deckType === 'lower' ? 'L' : 'U';
+      
+      if (seatNum.startsWith(deckPrefix)) {
+        const numPart = parseInt(seatNum.substring(1));
+        
+        // Custom mapping based on the 2+1 layout
+        // First row (0-based index): seats 1-6
+        // Second row: seats 7-12
+        // Third row: empty (pathway)
+        // Fourth row: seats 13-18
+        // Fifth row: seats 19-24
+        
+        let row = 0;
+        let col = 0;
+        
+        if (numPart <= 6) {
+          // First row
+          row = 0;
+          col = numPart - 1;
+        } else if (numPart <= 12) {
+          // Second row
+          row = 1;
+          col = numPart - 7;
+        } else if (numPart <= 18) {
+          // Fourth row (third is pathway)
+          row = 3;
+          col = numPart - 13;
+        } else if (numPart <= 24) {
+          // Fifth row
+          row = 4;
+          col = numPart - 19;
+        }
+        
+        // For 2+1 layout, leave last three columns empty for single seats
+        if (col < 9) {
+          grid[row][col] = seat;
+        } else if (col >= 9 && col < 12) {
+          // Single seat area (for the "+1" in "2+1")
+          grid[row][11] = seat; // Place in last column
+        }
+      }
+    });
+
+    return (
+      <div className="relative">
+        {/* Bus direction indicators */}
+        <div className="flex justify-between items-center mb-3 px-2">
+          <div className="text-sm font-medium bg-blue-100 text-blue-800 px-2 py-1 rounded flex items-center">
+            <ArrowRight size={16} className="mr-1" /> Front
+          </div>
+          <div className="text-sm font-medium bg-red-100 text-red-800 px-2 py-1 rounded">
+            Back
+          </div>
+        </div>
+        
+        {/* Scrollable seat layout container */}
+        <ScrollArea className="h-auto max-h-[520px] w-full">
+          <div className="grid grid-cols-12 gap-1 sm:gap-2 mt-3 mx-auto max-w-4xl min-w-[320px]">
+            {grid.map((row, rowIndex) => (
+              <React.Fragment key={`${deckType}-row-${rowIndex}`}>
+                {/* Skip the third row (index 2) as it's the pathway */}
+                {rowIndex === 2 ? (
+                  // Pathway row - special styling
+                  <React.Fragment>
+                    {Array(12).fill(null).map((_, colIndex) => (
+                      <div 
+                        key={`${deckType}-pathway-${colIndex}`}
+                        className="h-16 bg-blue-50 border border-dashed border-blue-200 rounded-md flex items-center justify-center col-span-1"
+                      >
+                        {colIndex === 5 && (
+                          <span className="text-xs text-blue-600 font-medium">Pathway</span>
+                        )}
+                      </div>
+                    ))}
+                  </React.Fragment>
+                ) : (
+                  // Regular rows with seats
+                  row.map((seat, colIndex) => (
+                    <div 
+                      key={`${deckType}-${rowIndex}-${colIndex}`}
+                      className={`relative ${!seat ? 'opacity-0' : ''} col-span-1 ${
+                        // Add spacing between seat columns
+                        colIndex === 2 || colIndex === 5 || colIndex === 8 ? 'mr-2' : ''
+                      }`}
+                    >
+                      {seat && (
+                        <div
+                          className={getSeatClasses(seat)}
+                          onClick={() => {
+                            if (seat.status === 'available') {
+                              onSelectSeat(seat);
+                            }
+                          }}
+                        >
+                          <span>{seat.number}</span>
+                          <span className="text-[8px] opacity-70">
+                            ({rowIndex},{colIndex},{deckType === 'lower' ? '0' : '1'})
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+        </ScrollArea>
+      </div>
+    );
   };
 
   const renderDefaultDeck = (deckSeats: Seat[], deckType: 'upper' | 'lower') => {
@@ -170,7 +301,6 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
     );
   };
 
-  // Render seater+sleeper bus with different layout in lower deck
   const renderMixedLowerDeck = (deckSeats: Seat[]) => {
     if (deckSeats.length === 0) {
       return (
@@ -252,7 +382,6 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
     );
   };
 
-  // Render all-seater bus with 2x12 + 1x12 layout
   const renderAllSeaterLowerDeck = (deckSeats: Seat[]) => {
     if (deckSeats.length === 0) {
       return (
@@ -333,7 +462,6 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
     );
   };
 
-  // Render 2x12 + 1x6 layout for seater-sleeper
   const renderSeaterSleeperLowerDeck = (deckSeats: Seat[]) => {
     if (deckSeats.length === 0) {
       return (
