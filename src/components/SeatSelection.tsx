@@ -136,46 +136,48 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
         </div>
         
         {/* Scrollable seat layout container with horizontal scroll for mobile */}
-        <ScrollArea className="w-full" orientation="horizontal">
-          <div className="min-w-[600px] px-4">
-            {grid.map((row, rowIndex) => (
-              <React.Fragment key={`${deckType}-row-${rowIndex}`}>
-                {/* Skip rendering the third row (index 2) as it's the pathway */}
-                {rowIndex !== 2 ? (
-                  <div className="flex my-1">
-                    {row.map((seat, colIndex) => (
-                      <div 
-                        key={`${deckType}-${rowIndex}-${colIndex}`}
-                        className="relative"
-                      >
-                        {seat && (
-                          <div
-                            className={getSeatClasses(seat)}
-                            onClick={() => {
-                              if (seat.status === 'available') {
-                                onSelectSeat(seat);
-                              }
-                            }}
-                          >
-                            <span>{seat.number}</span>
-                            <span className="text-[6px] absolute bottom-1 opacity-60">
-                              ({colIndex},{rowIndex},{deckType === 'lower' ? '0' : '1'})
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  // Empty space for pathway row - just add margin
-                  <div className="h-8 my-2 flex items-center pl-4">
-                    <div className="text-[10px] text-blue-600 font-medium">Pathway</div>
-                  </div>
-                )}
-              </React.Fragment>
-            ))}
-          </div>
-        </ScrollArea>
+        <div className="overflow-x-auto">
+          <ScrollArea className="w-full">
+            <div className="min-w-[600px] px-4">
+              {grid.map((row, rowIndex) => (
+                <React.Fragment key={`${deckType}-row-${rowIndex}`}>
+                  {/* Skip rendering the third row (index 2) as it's the pathway */}
+                  {rowIndex !== 2 ? (
+                    <div className="flex my-1">
+                      {row.map((seat, colIndex) => (
+                        <div 
+                          key={`${deckType}-${rowIndex}-${colIndex}`}
+                          className="relative"
+                        >
+                          {seat && (
+                            <div
+                              className={getSeatClasses(seat)}
+                              onClick={() => {
+                                if (seat.status === 'available') {
+                                  onSelectSeat(seat);
+                                }
+                              }}
+                            >
+                              <span>{seat.number}</span>
+                              <span className="text-[6px] absolute bottom-1 opacity-60">
+                                ({colIndex},{rowIndex},{deckType === 'lower' ? '0' : '1'})
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    // Empty space for pathway row - just add margin
+                    <div className="h-8 my-2 flex items-center pl-4">
+                      <div className="text-[10px] text-blue-600 font-medium">Pathway</div>
+                    </div>
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+          </ScrollArea>
+        </div>
       </div>
     );
   };
