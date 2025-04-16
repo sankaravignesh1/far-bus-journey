@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Seat } from '../types';
 import { Info, HelpCircle, ArrowRight } from 'lucide-react';
