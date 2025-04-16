@@ -3,7 +3,6 @@ import { Seat } from '../types';
 import { Info, HelpCircle, ArrowRight } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useIsMobile } from '@/hooks/use-mobile';
 
 interface SeatSelectionProps {
   seats: Seat[];
@@ -23,7 +22,6 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
   const [showInfo, setShowInfo] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const isMobile = useIsMobile();
   
   // Group seats by deck
   const lowerDeckSeats = seats.filter(seat => seat.deck === "lower");
@@ -45,14 +43,25 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
   const getSeatClasses = (seat: Seat) => {
     const status = getSeatStatus(seat);
     
-    // Base classes - maintaining fixed size regardless of screen size
-    let classes = 'flex items-center justify-center text-xs font-medium cursor-pointer rounded-md ';
+    // Base classes - making sure seats don't shrink on mobile with fixed width and height
+    let classes = 'flex items-center justify-center text-xs font-medium cursor-pointer rounded-md min-w-[32px] md:min-w-[36px] ';
     
-    // Fixed size for all screen sizes
+    // Adjust height based on seat type and position
     if (seat.type === "Sleeper") {
-      classes += 'w-12 h-12 min-w-[48px] min-h-[48px] '; // Fixed size for sleeper
+      classes += 'h-12 min-h-[48px] '; // Sleeper seats are taller with minimum height
     } else {
-      classes += 'w-10 h-10 min-w-[40px] min-h-[40px] '; // Fixed size for seater
+      classes += 'h-10 min-h-[40px] '; // Seater seats are shorter with minimum height
+    }
+    
+    // Adjust width based on row position for custom layouts
+    const seatNum = seat.number;
+    const row = getRowFromSeatNumber(seatNum);
+    
+    // Square shaped seats for the third row in certain layouts
+    if ((busLayout === "2+1-sleeper-seater" || busLayout === "all-seater") && row === 2) {
+      classes += 'w-full aspect-square '; // Make third row seats square
+    } else {
+      classes += 'w-full '; // Default rectangle shape
     }
     
     if (status === 'available') {
@@ -536,67 +545,23 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
   const renderDeck = (deckSeats: Seat[], deckType: 'upper' | 'lower') => {
     return (
       <div className="mb-8">
-        <h3 className="text-lg font-serif mb-2 bg-far-cream p-2 rounded-lg">
+        <h3 className="text-lg font-serif mb-2">
           {deckType === 'lower' ? 'Lower Deck' : 'Upper Deck'}
         </h3>
         
-        {/* Bus direction indicators */}
-        <div className="flex justify-between items-center mb-3 px-2">
-          <div className="text-sm font-medium bg-blue-100 text-blue-800 px-2 py-1 rounded flex items-center">
-            <ArrowRight size={16} className="mr-1" /> Front
-          </div>
-          <div className="text-sm font-medium bg-red-100 text-red-800 px-2 py-1 rounded">
-            Back
-          </div>
-        </div>
-        
-        {/* Scrollable container for seat layout */}
-        <div className="relative overflow-x-auto">
-          <ScrollArea className="h-auto w-full" orientation="horizontal">
-            <div className="min-w-[600px]">
-              {deckSeats.length === 0 ? (
-                <div className="py-4 text-center text-gray-500">
-                  No seats available for this deck
-                </div>
-              ) : (
-                <div className="grid grid-cols-12 gap-2 pb-4">
-                  {deckSeats.map((seat) => {
-                    // Calculate position based on X, Y coordinates
-                    const X = parseInt(seat.number.substring(1)) % 12;
-                    const Y = Math.floor(parseInt(seat.number.substring(1)) / 12);
-                    
-                    // 2+1 layout - every 3rd column is for single seats
-                    const colSpan = seat.position === "single" ? 1 : 2;
-                    const colStart = (X * colSpan) + 1;
-                    
-                    return (
-                      <div
-                        key={seat.id}
-                        className={`col-start-${colStart} col-span-${colSpan} row-start-${Y+1} flex justify-center`}
-                        style={{ 
-                          gridColumn: `${colStart} / span ${colSpan}`,
-                          gridRow: `${Y+1}`,
-                          margin: '2px'
-                        }}
-                      >
-                        <div
-                          className={getSeatClasses(seat)}
-                          onClick={() => {
-                            if (seat.status === 'available') {
-                              onSelectSeat(seat);
-                            }
-                          }}
-                        >
-                          {seat.number}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </ScrollArea>
-        </div>
+        {deckType === 'upper' ? (
+          // Always use default layout for upper deck
+          renderDefaultDeck(deckSeats, deckType)
+        ) : (
+          // For lower deck, layout depends on bus type
+          busLayout === "2+1-sleeper-seater" ? 
+            renderMixedLowerDeck(deckSeats) :
+          busLayout === "all-seater" ?
+            renderAllSeaterLowerDeck(deckSeats) :
+          busLayout === "seater-sleeper" ?
+            renderSeaterSleeperLowerDeck(deckSeats) :
+            renderDefaultDeck(deckSeats, deckType)
+        )}
       </div>
     );
   };
@@ -660,14 +625,11 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
       )}
       
       <div className="bg-white border border-far-lightgray rounded-lg p-4 sm:p-6">
-        {/* Visually separate the decks with styling */}
-        <div className="mb-8">
-          {renderDeck(lowerDeckSeats, 'lower')}
-        </div>
+        {/* Render Lower Deck first - matching the requirement */}
+        {renderDeck(lowerDeckSeats, 'lower')}
         
-        <div className="border-t-2 border-far-cream pt-4">
-          {renderDeck(upperDeckSeats, 'upper')}
-        </div>
+        {/* Render Upper Deck below */}
+        {renderDeck(upperDeckSeats, 'upper')}
         
         {seats.length === 0 && (
           <div className="text-center py-8">
