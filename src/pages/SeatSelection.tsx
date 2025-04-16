@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import SeatSelection from '../components/SeatSelection';
@@ -8,7 +7,6 @@ import { Seat, Bus } from '../types';
 import { buses, boardingPoints, droppingPoints } from '../data/mockData';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import { generateSeatsForBusType } from '../utils/seatUtils';
 
 const SeatSelectionPage = () => {
   const { busId } = useParams<{ busId: string }>();
@@ -36,6 +34,356 @@ const SeatSelectionPage = () => {
       setLoading(false);
     }
   }, [busId]);
+  
+  const generateSeatsForBusType = (busId: string, busLayout: string): Seat[] => {
+    switch (busLayout) {
+      case "2+1-sleeper-seater":
+        return generateSleeperSeaterLayout(busId);
+      case "all-seater":
+        return generateAllSeaterLayout(busId);
+      case "seater-sleeper":
+        return generateSeaterSleeperLayout(busId);
+      default:
+        return generateEnhancedBusLayout(busId);
+    }
+  };
+  
+  const generateEnhancedBusLayout = (busId: string): Seat[] => {
+    const seats: Seat[] = [];
+    const rows = 5;
+    const seatsPerRow = 6;
+    
+    for (let row = 0; row < 2; row++) {
+      for (let col = 0; col < seatsPerRow; col++) {
+        const seatNumber = `L${(row * seatsPerRow + col + 1).toString().padStart(2, '0')}`;
+        
+        let status: 'available' | 'booked' | 'female_booked' = 'available';
+        const random = Math.random();
+        if (random < 0.15) {
+          status = 'booked';
+        } else if (random < 0.25) {
+          status = 'female_booked';
+        }
+        
+        seats.push({
+          id: `${busId}-${seatNumber}`,
+          number: seatNumber,
+          type: "Sleeper",
+          status: status,
+          position: col < seatsPerRow - 1 ? "double" : "single",
+          deck: "lower"
+        });
+      }
+    }
+    
+    for (let row = 3; row < 5; row++) {
+      for (let col = 0; col < seatsPerRow; col++) {
+        const seatNumber = `L${((row - 1) * seatsPerRow + col + 1).toString().padStart(2, '0')}`;
+        
+        let status: 'available' | 'booked' | 'female_booked' = 'available';
+        const random = Math.random();
+        if (random < 0.15) {
+          status = 'booked';
+        } else if (random < 0.25) {
+          status = 'female_booked';
+        }
+        
+        seats.push({
+          id: `${busId}-${seatNumber}`,
+          number: seatNumber,
+          type: "Sleeper",
+          status: status,
+          position: col < seatsPerRow - 1 ? "double" : "single",
+          deck: "lower"
+        });
+      }
+    }
+    
+    for (let row = 0; row < 2; row++) {
+      for (let col = 0; col < seatsPerRow; col++) {
+        const seatNumber = `U${(row * seatsPerRow + col + 1).toString().padStart(2, '0')}`;
+        
+        let status: 'available' | 'booked' | 'female_booked' = 'available';
+        const random = Math.random();
+        if (random < 0.15) {
+          status = 'booked';
+        } else if (random < 0.25) {
+          status = 'female_booked';
+        }
+        
+        seats.push({
+          id: `${busId}-${seatNumber}`,
+          number: seatNumber,
+          type: "Sleeper",
+          status: status,
+          position: col < seatsPerRow - 1 ? "double" : "single",
+          deck: "upper"
+        });
+      }
+    }
+    
+    for (let row = 3; row < 5; row++) {
+      for (let col = 0; col < seatsPerRow; col++) {
+        const seatNumber = `U${((row - 1) * seatsPerRow + col + 1).toString().padStart(2, '0')}`;
+        
+        let status: 'available' | 'booked' | 'female_booked' = 'available';
+        const random = Math.random();
+        if (random < 0.15) {
+          status = 'booked';
+        } else if (random < 0.25) {
+          status = 'female_booked';
+        }
+        
+        seats.push({
+          id: `${busId}-${seatNumber}`,
+          number: seatNumber,
+          type: "Sleeper",
+          status: status,
+          position: col < seatsPerRow - 1 ? "double" : "single",
+          deck: "upper"
+        });
+      }
+    }
+    
+    return seats;
+  };
+  
+  const generateTwoDeckSleeperSeats = (busId: string): Seat[] => {
+    const seats: Seat[] = [];
+    const rows = 3;
+    const cols = 6;
+    const totalSeatsPerDeck = rows * cols;
+    
+    for (let i = 1; i <= totalSeatsPerDeck; i++) {
+      const seatNumber = `L${i.toString().padStart(2, '0')}`;
+      
+      let status: 'available' | 'booked' | 'female_booked' = 'available';
+      const random = Math.random();
+      if (random < 0.2) {
+        status = 'booked';
+      } else if (random < 0.3) {
+        status = 'female_booked';
+      }
+      
+      seats.push({
+        id: `${busId}-${seatNumber}`,
+        number: seatNumber,
+        type: "Sleeper",
+        status: status,
+        position: "double",
+        deck: "lower"
+      });
+    }
+    
+    for (let i = 1; i <= totalSeatsPerDeck; i++) {
+      const seatNumber = `U${i.toString().padStart(2, '0')}`;
+      
+      let status: 'available' | 'booked' | 'female_booked' = 'available';
+      const random = Math.random();
+      if (random < 0.2) {
+        status = 'booked';
+      } else if (random < 0.3) {
+        status = 'female_booked';
+      }
+      
+      seats.push({
+        id: `${busId}-${seatNumber}`,
+        number: seatNumber,
+        type: "Sleeper",
+        status: status,
+        position: "double",
+        deck: "upper"
+      });
+    }
+    
+    return seats;
+  };
+  
+  const generateSleeperSeaterLayout = (busId: string): Seat[] => {
+    const seats: Seat[] = [];
+    
+    for (let i = 1; i <= 12; i++) {
+      const seatNumber = `L${i.toString().padStart(2, '0')}`;
+      
+      let status: 'available' | 'booked' | 'female_booked' = 'available';
+      const random = Math.random();
+      if (random < 0.2) {
+        status = 'booked';
+      } else if (random < 0.3) {
+        status = 'female_booked';
+      }
+      
+      seats.push({
+        id: `${busId}-${seatNumber}`,
+        number: seatNumber,
+        type: "Sleeper",
+        status: status,
+        position: "double",
+        deck: "lower"
+      });
+    }
+    
+    for (let i = 13; i <= 24; i++) {
+      const seatNumber = `L${i.toString().padStart(2, '0')}`;
+      
+      let status: 'available' | 'booked' | 'female_booked' = 'available';
+      const random = Math.random();
+      if (random < 0.2) {
+        status = 'booked';
+      } else if (random < 0.3) {
+        status = 'female_booked';
+      }
+      
+      seats.push({
+        id: `${busId}-${seatNumber}`,
+        number: seatNumber,
+        type: "Seater",
+        status: status,
+        position: "single",
+        deck: "lower"
+      });
+    }
+    
+    for (let i = 1; i <= 18; i++) {
+      const seatNumber = `U${i.toString().padStart(2, '0')}`;
+      
+      let status: 'available' | 'booked' | 'female_booked' = 'available';
+      const random = Math.random();
+      if (random < 0.2) {
+        status = 'booked';
+      } else if (random < 0.3) {
+        status = 'female_booked';
+      }
+      
+      seats.push({
+        id: `${busId}-${seatNumber}`,
+        number: seatNumber,
+        type: "Sleeper",
+        status: status,
+        position: "double",
+        deck: "upper"
+      });
+    }
+    
+    return seats;
+  };
+  
+  const generateAllSeaterLayout = (busId: string): Seat[] => {
+    const seats: Seat[] = [];
+    
+    for (let i = 1; i <= 36; i++) {
+      const seatNumber = `L${i.toString().padStart(2, '0')}`;
+      
+      let status: 'available' | 'booked' | 'female_booked' = 'available';
+      const random = Math.random();
+      if (random < 0.2) {
+        status = 'booked';
+      } else if (random < 0.3) {
+        status = 'female_booked';
+      }
+      
+      seats.push({
+        id: `${busId}-${seatNumber}`,
+        number: seatNumber,
+        type: "Seater",
+        status: status,
+        position: "single",
+        deck: "lower"
+      });
+    }
+    
+    for (let i = 1; i <= 18; i++) {
+      const seatNumber = `U${i.toString().padStart(2, '0')}`;
+      
+      let status: 'available' | 'booked' | 'female_booked' = 'available';
+      const random = Math.random();
+      if (random < 0.2) {
+        status = 'booked';
+      } else if (random < 0.3) {
+        status = 'female_booked';
+      }
+      
+      seats.push({
+        id: `${busId}-${seatNumber}`,
+        number: seatNumber,
+        type: "Sleeper",
+        status: status,
+        position: "double",
+        deck: "upper"
+      });
+    }
+    
+    return seats;
+  };
+  
+  const generateSeaterSleeperLayout = (busId: string): Seat[] => {
+    const seats: Seat[] = [];
+    
+    for (let i = 1; i <= 24; i++) {
+      const seatNumber = `L${i.toString().padStart(2, '0')}`;
+      
+      let status: 'available' | 'booked' | 'female_booked' = 'available';
+      const random = Math.random();
+      if (random < 0.2) {
+        status = 'booked';
+      } else if (random < 0.3) {
+        status = 'female_booked';
+      }
+      
+      seats.push({
+        id: `${busId}-${seatNumber}`,
+        number: seatNumber,
+        type: "Seater",
+        status: status,
+        position: "single",
+        deck: "lower"
+      });
+    }
+    
+    for (let i = 25; i <= 30; i++) {
+      const seatNumber = `L${i.toString().padStart(2, '0')}`;
+      
+      let status: 'available' | 'booked' | 'female_booked' = 'available';
+      const random = Math.random();
+      if (random < 0.2) {
+        status = 'booked';
+      } else if (random < 0.3) {
+        status = 'female_booked';
+      }
+      
+      seats.push({
+        id: `${busId}-${seatNumber}`,
+        number: seatNumber,
+        type: "Sleeper",
+        status: status,
+        position: "double",
+        deck: "lower"
+      });
+    }
+    
+    for (let i = 1; i <= 18; i++) {
+      const seatNumber = `U${i.toString().padStart(2, '0')}`;
+      
+      let status: 'available' | 'booked' | 'female_booked' = 'available';
+      const random = Math.random();
+      if (random < 0.2) {
+        status = 'booked';
+      } else if (random < 0.3) {
+        status = 'female_booked';
+      }
+      
+      seats.push({
+        id: `${busId}-${seatNumber}`,
+        number: seatNumber,
+        type: "Sleeper",
+        status: status,
+        position: "double",
+        deck: "upper"
+      });
+    }
+    
+    return seats;
+  };
   
   const isAdjacentToFemaleBookedSeat = (seat: Seat): boolean => {
     const seatNum = seat.number;

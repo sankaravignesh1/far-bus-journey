@@ -1,11 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { Seat } from '../types';
 import { Info, HelpCircle, ArrowRight } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SeatSelectionProps {
   seats: Seat[];
@@ -25,7 +22,6 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
   const [showInfo, setShowInfo] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const isMobile = useIsMobile();
   
   // Group seats by deck
   const lowerDeckSeats = seats.filter(seat => seat.deck === "lower");
@@ -47,20 +43,26 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
   const getSeatClasses = (seat: Seat) => {
     const status = getSeatStatus(seat);
     
-    // Base classes
-    let classes = 'flex items-center justify-center text-xs font-medium cursor-pointer rounded-md ';
+    // Base classes - making sure seats don't shrink on mobile with fixed width and height
+    let classes = 'flex items-center justify-center text-xs font-medium cursor-pointer rounded-md min-w-[32px] md:min-w-[36px] ';
     
-    // Fixed dimensions based on seat type
+    // Adjust height based on seat type and position
     if (seat.type === "Sleeper") {
-      // For sleeper seats: width 1, height 2 - horizontal orientation
-      classes += 'w-[36px] h-[72px] '; 
+      classes += 'h-12 min-h-[48px] '; // Sleeper seats are taller with minimum height
     } else {
-      // For seater seats: width 1, height 1
-      classes += 'w-[36px] h-[36px] '; 
+      classes += 'h-10 min-h-[40px] '; // Seater seats are shorter with minimum height
     }
     
-    // Add spacing between seats
-    classes += 'mx-[2px] my-[2px] ';
+    // Adjust width based on row position for custom layouts
+    const seatNum = seat.number;
+    const row = getRowFromSeatNumber(seatNum);
+    
+    // Square shaped seats for the third row in certain layouts
+    if ((busLayout === "2+1-sleeper-seater" || busLayout === "all-seater") && row === 2) {
+      classes += 'w-full aspect-square '; // Make third row seats square
+    } else {
+      classes += 'w-full '; // Default rectangle shape
+    }
     
     if (status === 'available') {
       classes += 'bg-white border border-gray-300 hover:border-far-green ';
@@ -75,51 +77,27 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
     return classes;
   };
 
-  // Helper function to find the maximum X and Y values in a deck
-  const findGridDimensions = (deckSeats: Seat[]) => {
-    let maxX = 0;
-    let maxY = 0;
+  // Helper function to determine row from seat number
+  const getRowFromSeatNumber = (seatNum: string) => {
+    const deckPrefix = seatNum.substring(0, 1);
+    const numPart = parseInt(seatNum.substring(1));
     
-    deckSeats.forEach(seat => {
-      // Extract coordinates from seat number for demonstration
-      // In real implementation, these would come from your backend
-      const seatNum = seat.number;
-      const numPart = parseInt(seatNum.substring(1));
-      
-      // Use X and Y based on bus layout
-      let x = 0;
-      let y = 0;
-      
-      if (busLayout === "2+1") {
-        // Map according to CSV data
-        if (numPart === 6) { x = 0; y = 0; }
-        else if (numPart === 5) { x = 0; y = 1; }
-        else if (numPart === 4) { x = 0; y = 3; }
-        else if (numPart === 12) { x = 2; y = 0; }
-        else if (numPart === 11) { x = 2; y = 1; }
-        else if (numPart === 10) { x = 2; y = 3; }
-        else if (numPart === 18) { x = 4; y = 0; }
-        else if (numPart === 17) { x = 4; y = 1; }
-        else if (numPart === 16) { x = 4; y = 3; }
-        else if (numPart === 24) { x = 6; y = 0; }
-        else if (numPart === 23) { x = 6; y = 1; }
-        else if (numPart === 22) { x = 6; y = 3; }
-        else if (numPart === 30) { x = 8; y = 0; }
-        else if (numPart === 29) { x = 8; y = 1; }
-        else if (numPart === 28) { x = 8; y = 3; }
-        else if (numPart === 36) { x = 10; y = 0; }
-        else if (numPart === 35) { x = 10; y = 1; }
-        else if (numPart === 34) { x = 10; y = 3; }
-      }
-      
-      maxX = Math.max(maxX, x);
-      maxY = Math.max(maxY, y);
-    });
-    
-    return { rows: maxY + 1, cols: maxX + 1 };
+    // Enhanced layout with more rows
+    if (busLayout === "all-seater") {
+      // For all-seater: 12 seats per row
+      return Math.floor((numPart - 1) / 12);
+    } else if (busLayout === "2+1-sleeper-seater" || busLayout === "seater-sleeper") {
+      // For mixed layouts
+      if (numPart <= 12) return 0;
+      else if (numPart <= 24) return 1;
+      else return 2;
+    } else {
+      // Default 6 seats per row layout
+      return Math.floor((numPart - 1) / 6);
+    }
   };
 
-  const renderBusLayout = (deckSeats: Seat[], deckType: 'upper' | 'lower') => {
+  const renderExtendedBusLayout = (deckSeats: Seat[], deckType: 'upper' | 'lower') => {
     if (deckSeats.length === 0) {
       return (
         <div className="py-4 text-center text-gray-500">
@@ -128,109 +106,100 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
       );
     }
 
-    // Create a grid based on the CSV data
-    const grid: (Seat | null)[][] = [];
-    const maxX = 10; // Based on the CSV data, max X coordinate is 10
-    const maxY = 4;  // Based on the CSV data, max Y coordinate is 4
+    // Enhanced 5x12 grid layout
+    const rows = 5; // Maximum of 5 rows
+    const cols = 12; // Maximum of 12 columns
     
-    // Initialize grid with null values
-    for (let y = 0; y <= maxY; y++) {
-      grid[y] = [];
-      for (let x = 0; x <= maxX; x++) {
-        grid[y][x] = null;
-      }
-    }
+    // Create an empty grid
+    const grid = Array(rows).fill(null).map(() => Array(cols).fill(null));
     
-    // Map seats to the grid using the CSV coordinates
+    // Map seats to the grid based on the predetermined pattern
     deckSeats.forEach(seat => {
       const seatNum = seat.number;
-      const numPart = parseInt(seatNum.substring(1));
+      const deckPrefix = deckType === 'lower' ? 'L' : 'U';
       
-      // Find X, Y coordinates from the CSV data
-      let x = 0;
-      let y = 0;
-      
-      // Using a mapping based on the CSV data
-      // This is a simplified example - in production, you would get these from your data
-      if (deckType === 'lower') {
-        if (numPart === 6) { x = 0; y = 0; }
-        else if (numPart === 5) { x = 0; y = 1; }
-        else if (numPart === 4) { x = 0; y = 3; }
-        else if (numPart === 12) { x = 2; y = 0; }
-        else if (numPart === 11) { x = 2; y = 1; }
-        else if (numPart === 10) { x = 2; y = 3; }
-        else if (numPart === 18) { x = 4; y = 0; }
-        else if (numPart === 17) { x = 4; y = 1; }
-        else if (numPart === 16) { x = 4; y = 3; }
-        else if (numPart === 24) { x = 6; y = 0; }
-        else if (numPart === 23) { x = 6; y = 1; }
-        else if (numPart === 22) { x = 6; y = 3; }
-        else if (numPart === 30) { x = 8; y = 0; }
-        else if (numPart === 29) { x = 8; y = 1; }
-        else if (numPart === 28) { x = 8; y = 3; }
-        else if (numPart === 36) { x = 10; y = 0; }
-        else if (numPart === 35) { x = 10; y = 1; }
-        else if (numPart === 34) { x = 10; y = 3; }
-      } else { // Upper deck
-        if (numPart === 1) { x = 0; y = 1; }
-        else if (numPart === 2) { x = 0; y = 2; }
-        else if (numPart === 3) { x = 0; y = 4; }
-        else if (numPart === 7) { x = 2; y = 1; }
-        else if (numPart === 8) { x = 2; y = 2; }
-        else if (numPart === 9) { x = 2; y = 4; }
-        else if (numPart === 13) { x = 4; y = 1; }
-        else if (numPart === 14) { x = 4; y = 2; }
-        else if (numPart === 15) { x = 4; y = 4; }
-        else if (numPart === 19) { x = 6; y = 1; }
-        else if (numPart === 20) { x = 6; y = 2; }
-        else if (numPart === 21) { x = 6; y = 4; }
-        else if (numPart === 25) { x = 8; y = 1; }
-        else if (numPart === 26) { x = 8; y = 2; }
-        else if (numPart === 27) { x = 8; y = 4; }
-        else if (numPart === 31) { x = 10; y = 1; }
-        else if (numPart === 32) { x = 10; y = 2; }
-        else if (numPart === 33) { x = 10; y = 4; }
-      }
-      
-      // Place seat in grid if coordinates are valid
-      if (x >= 0 && x <= maxX && y >= 0 && y <= maxY) {
-        grid[y][x] = seat;
+      if (seatNum.startsWith(deckPrefix)) {
+        const numPart = parseInt(seatNum.substring(1));
+        
+        // Custom mapping based on the 2+1 layout
+        // First row (0-based index): seats 1-6
+        // Second row: seats 7-12
+        // Third row: empty (pathway)
+        // Fourth row: seats 13-18
+        // Fifth row: seats 19-24
+        
+        let row = 0;
+        let col = 0;
+        
+        if (numPart <= 6) {
+          // First row
+          row = 0;
+          col = numPart - 1;
+        } else if (numPart <= 12) {
+          // Second row
+          row = 1;
+          col = numPart - 7;
+        } else if (numPart <= 18) {
+          // Fourth row (third is pathway)
+          row = 3;
+          col = numPart - 13;
+        } else if (numPart <= 24) {
+          // Fifth row
+          row = 4;
+          col = numPart - 19;
+        }
+        
+        // For 2+1 layout, leave last three columns empty for single seats
+        if (col < 9) {
+          grid[row][col] = seat;
+        } else if (col >= 9 && col < 12) {
+          // Single seat area (for the "+1" in "2+1")
+          grid[row][11] = seat; // Place in last column
+        }
       }
     });
 
     return (
-      <div className="relative mb-6">
-        {/* Bus deck header with colored badge */}
-        <div className="flex items-center mb-3">
-          <div className={`w-8 h-8 ${deckType === 'lower' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'} rounded-full flex items-center justify-center text-lg font-medium mr-2`}>
-            {deckType === 'lower' ? 'L' : 'U'}
-          </div>
-          <h3 className="text-lg font-serif">
-            {deckType === 'lower' ? 'Lower Deck' : 'Upper Deck'}
-          </h3>
-        </div>
-        
-        {/* Direction indicators */}
+      <div className="relative">
+        {/* Bus direction indicators */}
         <div className="flex justify-between items-center mb-3 px-2">
-          <div className="text-sm font-medium bg-blue-100 text-blue-800 px-3 py-1 rounded flex items-center">
+          <div className="text-sm font-medium bg-blue-100 text-blue-800 px-2 py-1 rounded flex items-center">
             <ArrowRight size={16} className="mr-1" /> Front
           </div>
-          <div className="text-sm font-medium bg-red-100 text-red-800 px-3 py-1 rounded">
+          <div className="text-sm font-medium bg-red-100 text-red-800 px-2 py-1 rounded">
             Back
           </div>
         </div>
         
-        {/* Scrollable seat layout */}
-        <div className="overflow-x-auto">
-          <div className="min-w-[650px] px-2">
+        {/* Scrollable seat layout container */}
+        <ScrollArea className="h-auto max-h-[520px] w-full">
+          <div className="grid grid-cols-12 gap-1 sm:gap-2 mt-3 mx-auto max-w-4xl min-w-[320px]">
             {grid.map((row, rowIndex) => (
-              // Skip row index 2 which is the pathway
-              rowIndex !== 2 && (
-                <div key={`${deckType}-row-${rowIndex}`} className="flex my-2">
-                  {row.map((seat, colIndex) => (
+              <React.Fragment key={`${deckType}-row-${rowIndex}`}>
+                {/* Skip the third row (index 2) as it's the pathway */}
+                {rowIndex === 2 ? (
+                  // Pathway row - special styling
+                  <React.Fragment>
+                    {Array(12).fill(null).map((_, colIndex) => (
+                      <div 
+                        key={`${deckType}-pathway-${colIndex}`}
+                        className="h-16 bg-blue-50 border border-dashed border-blue-200 rounded-md flex items-center justify-center col-span-1"
+                      >
+                        {colIndex === 5 && (
+                          <span className="text-xs text-blue-600 font-medium">Pathway</span>
+                        )}
+                      </div>
+                    ))}
+                  </React.Fragment>
+                ) : (
+                  // Regular rows with seats
+                  row.map((seat, colIndex) => (
                     <div 
                       key={`${deckType}-${rowIndex}-${colIndex}`}
-                      className="relative"
+                      className={`relative ${!seat ? 'opacity-0' : ''} col-span-1 ${
+                        // Add spacing between seat columns
+                        colIndex === 2 || colIndex === 5 || colIndex === 8 ? 'mr-2' : ''
+                      }`}
                     >
                       {seat && (
                         <div
@@ -242,18 +211,357 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
                           }}
                         >
                           <span>{seat.number}</span>
+                          <span className="text-[8px] opacity-70">
+                            ({rowIndex},{colIndex},{deckType === 'lower' ? '0' : '1'})
+                          </span>
                         </div>
                       )}
-                      {!seat && (
-                        <div className="w-[40px] h-[40px]"></div>
-                      )}
                     </div>
-                  ))}
-                </div>
-              )
+                  ))
+                )}
+              </React.Fragment>
             ))}
           </div>
+        </ScrollArea>
+      </div>
+    );
+  };
+
+  const renderDefaultDeck = (deckSeats: Seat[], deckType: 'upper' | 'lower') => {
+    if (deckSeats.length === 0) {
+      return (
+        <div className="py-4 text-center text-gray-500">
+          No seats available for this deck
         </div>
+      );
+    }
+
+    // Standard 3x6 grid
+    const rows = 3;
+    const cols = 6;
+    const grid = Array(rows).fill(null).map(() => Array(cols).fill(null));
+    
+    // Map seat numbers to grid positions
+    deckSeats.forEach(seat => {
+      const seatNum = seat.number;
+      // Decode seat number format to row/col (e.g., L01, U23)
+      const deckPrefix = deckType === 'lower' ? 'L' : 'U';
+      if (seatNum.startsWith(deckPrefix)) {
+        const numPart = seatNum.substring(1);
+        const row = Math.floor((parseInt(numPart) - 1) / cols);
+        const col = (parseInt(numPart) - 1) % cols;
+        
+        if (row >= 0 && row < rows && col >= 0 && col < cols) {
+          grid[row][col] = seat;
+        }
+      }
+    });
+
+    return (
+      <div>
+        {/* Bus direction indicators */}
+        <div className="flex justify-between items-center mb-3 px-2">
+          <div className="text-sm font-medium bg-blue-100 text-blue-800 px-2 py-1 rounded flex items-center">
+            <ArrowRight size={16} className="mr-1" /> Front
+          </div>
+          <div className="text-sm font-medium bg-red-100 text-red-800 px-2 py-1 rounded">
+            Back
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-6 gap-1 sm:gap-2 mt-3 mx-auto max-w-md">
+          {grid.map((row, rowIndex) => (
+            <React.Fragment key={`${deckType}-row-${rowIndex}`}>
+              {row.map((seat, colIndex) => (
+                <div 
+                  key={`${deckType}-${rowIndex}-${colIndex}`} 
+                  className={`relative ${!seat ? 'opacity-0' : ''} ${
+                    // Increased pathway between rows 2 and 3
+                    rowIndex === 2 ? 'mt-16' : ''
+                  }`}
+                >
+                  {seat && (
+                    <div
+                      className={getSeatClasses(seat)}
+                      onClick={() => {
+                        if (seat.status === 'available') {
+                          onSelectSeat(seat);
+                        }
+                      }}
+                    >
+                      <span>{seat.number}</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderMixedLowerDeck = (deckSeats: Seat[]) => {
+    if (deckSeats.length === 0) {
+      return (
+        <div className="py-4 text-center text-gray-500">
+          No seats available for this deck
+        </div>
+      );
+    }
+
+    // For 2+1-sleeper-seater: First two rows 2x6, third row 1x12
+    // For this layout, we'll create a custom grid
+    const firstTwoRows = deckSeats.filter(seat => {
+      const numPart = parseInt(seat.number.substring(1));
+      return numPart <= 12; // First 12 seats (first 2 rows)
+    });
+    
+    const thirdRow = deckSeats.filter(seat => {
+      const numPart = parseInt(seat.number.substring(1));
+      return numPart > 12; // Seats 13-24 (third row)
+    });
+
+    return (
+      <div>
+        {/* Bus direction indicators */}
+        <div className="flex justify-between items-center mb-3 px-2">
+          <div className="text-sm font-medium bg-blue-100 text-blue-800 px-2 py-1 rounded flex items-center">
+            <ArrowRight size={16} className="mr-1" /> Front
+          </div>
+          <div className="text-sm font-medium bg-red-100 text-red-800 px-2 py-1 rounded">
+            Back
+          </div>
+        </div>
+        
+        {/* First two rows - 2x6 grid - ensure consistent width on mobile */}
+        <div className="grid grid-cols-6 gap-1 sm:gap-2 mx-auto max-w-md">
+          {firstTwoRows.map((seat, index) => (
+            <div 
+              key={`lower-mixed-${index}`}
+              className="relative"
+            >
+              <div
+                className={getSeatClasses(seat)}
+                onClick={() => {
+                  if (seat.status === 'available') {
+                    onSelectSeat(seat);
+                  }
+                }}
+              >
+                <span>{seat.number}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        {/* Spacer - pathway - increased height */}
+        <div className="h-16"></div>
+        
+        {/* Third row - 1x12 grid (seater format) - ensure equal cells on mobile */}
+        <div className="grid grid-cols-12 gap-1 mx-auto max-w-md">
+          {thirdRow.map((seat, index) => (
+            <div 
+              key={`lower-mixed-third-${index}`}
+              className="relative"
+            >
+              <div
+                className={getSeatClasses(seat)}
+                onClick={() => {
+                  if (seat.status === 'available') {
+                    onSelectSeat(seat);
+                  }
+                }}
+              >
+                <span>{seat.number}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderAllSeaterLowerDeck = (deckSeats: Seat[]) => {
+    if (deckSeats.length === 0) {
+      return (
+        <div className="py-4 text-center text-gray-500">
+          No seats available for this deck
+        </div>
+      );
+    }
+
+    // For all-seater: 12 seats per row, all 3 rows
+    const firstTwoRows = deckSeats.filter(seat => {
+      const numPart = parseInt(seat.number.substring(1));
+      return numPart <= 24; // First 24 seats (first 2 rows)
+    });
+    
+    const thirdRow = deckSeats.filter(seat => {
+      const numPart = parseInt(seat.number.substring(1));
+      return numPart > 24; // Seats 25-36 (third row)
+    });
+
+    return (
+      <div>
+        {/* Bus direction indicators */}
+        <div className="flex justify-between items-center mb-3 px-2">
+          <div className="text-sm font-medium bg-blue-100 text-blue-800 px-2 py-1 rounded flex items-center">
+            <ArrowRight size={16} className="mr-1" /> Front
+          </div>
+          <div className="text-sm font-medium bg-red-100 text-red-800 px-2 py-1 rounded">
+            Back
+          </div>
+        </div>
+        
+        {/* First two rows - 2x12 grid - ensure fixed width on mobile */}
+        <div className="grid grid-cols-12 gap-1 mx-auto max-w-md">
+          {firstTwoRows.map((seat, index) => (
+            <div 
+              key={`lower-seater-${index}`}
+              className="relative"
+            >
+              <div
+                className={getSeatClasses(seat)}
+                onClick={() => {
+                  if (seat.status === 'available') {
+                    onSelectSeat(seat);
+                  }
+                }}
+              >
+                <span>{seat.number}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        {/* Spacer - pathway - increased height */}
+        <div className="h-16"></div>
+        
+        {/* Third row - 1x12 grid (also seater) - ensure equal cells on mobile */}
+        <div className="grid grid-cols-12 gap-1 mx-auto max-w-md">
+          {thirdRow.map((seat, index) => (
+            <div 
+              key={`lower-seater-third-${index}`}
+              className="relative"
+            >
+              <div
+                className={getSeatClasses(seat)}
+                onClick={() => {
+                  if (seat.status === 'available') {
+                    onSelectSeat(seat);
+                  }
+                }}
+              >
+                <span>{seat.number}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderSeaterSleeperLowerDeck = (deckSeats: Seat[]) => {
+    if (deckSeats.length === 0) {
+      return (
+        <div className="py-4 text-center text-gray-500">
+          No seats available for this deck
+        </div>
+      );
+    }
+
+    // For seater-sleeper: First two rows 2x12, third row 1x6
+    const firstTwoRows = deckSeats.filter(seat => {
+      const numPart = parseInt(seat.number.substring(1));
+      return numPart <= 24; // First 24 seats (first 2 rows)
+    });
+    
+    const thirdRow = deckSeats.filter(seat => {
+      const numPart = parseInt(seat.number.substring(1));
+      return numPart > 24; // Seats 25-30 (third row has 6 seats)
+    });
+
+    return (
+      <div>
+        {/* Bus direction indicators */}
+        <div className="flex justify-between items-center mb-3 px-2">
+          <div className="text-sm font-medium bg-blue-100 text-blue-800 px-2 py-1 rounded flex items-center">
+            <ArrowRight size={16} className="mr-1" /> Front
+          </div>
+          <div className="text-sm font-medium bg-red-100 text-red-800 px-2 py-1 rounded">
+            Back
+          </div>
+        </div>
+        
+        {/* First two rows - 2x12 grid - ensure fixed width on mobile */}
+        <div className="grid grid-cols-12 gap-1 mx-auto max-w-md">
+          {firstTwoRows.map((seat, index) => (
+            <div 
+              key={`lower-seatersleeper-${index}`}
+              className="relative"
+            >
+              <div
+                className={getSeatClasses(seat)}
+                onClick={() => {
+                  if (seat.status === 'available') {
+                    onSelectSeat(seat);
+                  }
+                }}
+              >
+                <span>{seat.number}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        {/* Spacer - pathway - increased height */}
+        <div className="h-16"></div>
+        
+        {/* Third row - 1x6 grid - ensure equal cells on mobile */}
+        <div className="grid grid-cols-6 gap-1 sm:gap-2 mx-auto max-w-md">
+          {thirdRow.map((seat, index) => (
+            <div 
+              key={`lower-seatersleeper-third-${index}`}
+              className="relative"
+            >
+              <div
+                className={getSeatClasses(seat)}
+                onClick={() => {
+                  if (seat.status === 'available') {
+                    onSelectSeat(seat);
+                  }
+                }}
+              >
+                <span>{seat.number}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderDeck = (deckSeats: Seat[], deckType: 'upper' | 'lower') => {
+    return (
+      <div className="mb-8">
+        <h3 className="text-lg font-serif mb-2">
+          {deckType === 'lower' ? 'Lower Deck' : 'Upper Deck'}
+        </h3>
+        
+        {deckType === 'upper' ? (
+          // Always use default layout for upper deck
+          renderDefaultDeck(deckSeats, deckType)
+        ) : (
+          // For lower deck, layout depends on bus type
+          busLayout === "2+1-sleeper-seater" ? 
+            renderMixedLowerDeck(deckSeats) :
+          busLayout === "all-seater" ?
+            renderAllSeaterLowerDeck(deckSeats) :
+          busLayout === "seater-sleeper" ?
+            renderSeaterSleeperLowerDeck(deckSeats) :
+            renderDefaultDeck(deckSeats, deckType)
+        )}
       </div>
     );
   };
@@ -317,14 +625,11 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
       )}
       
       <div className="bg-white border border-far-lightgray rounded-lg p-4 sm:p-6">
-        {/* Render Lower Deck first */}
-        {renderBusLayout(lowerDeckSeats, 'lower')}
-        
-        {/* Clear separator between decks */}
-        <Separator className="my-6 bg-gray-200 h-0.5" />
+        {/* Render Lower Deck first - matching the requirement */}
+        {renderDeck(lowerDeckSeats, 'lower')}
         
         {/* Render Upper Deck below */}
-        {renderBusLayout(upperDeckSeats, 'upper')}
+        {renderDeck(upperDeckSeats, 'upper')}
         
         {seats.length === 0 && (
           <div className="text-center py-8">
