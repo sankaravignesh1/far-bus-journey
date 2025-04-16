@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { Seat } from '../types';
 import { Info, HelpCircle, ArrowRight } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 
 interface SeatSelectionProps {
   seats: Seat[];
@@ -172,8 +174,8 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
         </div>
         
         {/* Scrollable seat layout container */}
-        <ScrollArea className="h-auto max-h-[520px] w-full">
-          <div className="grid grid-cols-12 gap-1 sm:gap-2 mt-3 mx-auto max-w-4xl min-w-[320px]">
+        <ScrollArea className="h-auto max-h-[520px] overflow-x-auto w-full">
+          <div className="grid grid-cols-12 gap-1 sm:gap-2 mt-3 mx-auto max-w-4xl min-w-[800px]">
             {grid.map((row, rowIndex) => (
               <React.Fragment key={`${deckType}-row-${rowIndex}`}>
                 {/* Skip the third row (index 2) as it's the pathway */}
@@ -186,7 +188,7 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
                         className="h-16 bg-blue-50 border border-dashed border-blue-200 rounded-md flex items-center justify-center col-span-1"
                       >
                         {colIndex === 5 && (
-                          <span className="text-xs text-blue-600 font-medium">Pathway</span>
+                          <span className="text-xs text-blue-600 font-medium opacity-0">Pathway</span>
                         )}
                       </div>
                     ))}
@@ -211,9 +213,6 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
                           }}
                         >
                           <span>{seat.number}</span>
-                          <span className="text-[8px] opacity-70">
-                            ({rowIndex},{colIndex},{deckType === 'lower' ? '0' : '1'})
-                          </span>
                         </div>
                       )}
                     </div>
@@ -269,34 +268,36 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
           </div>
         </div>
         
-        <div className="grid grid-cols-6 gap-1 sm:gap-2 mt-3 mx-auto max-w-md">
-          {grid.map((row, rowIndex) => (
-            <React.Fragment key={`${deckType}-row-${rowIndex}`}>
-              {row.map((seat, colIndex) => (
-                <div 
-                  key={`${deckType}-${rowIndex}-${colIndex}`} 
-                  className={`relative ${!seat ? 'opacity-0' : ''} ${
-                    // Increased pathway between rows 2 and 3
-                    rowIndex === 2 ? 'mt-16' : ''
-                  }`}
-                >
-                  {seat && (
-                    <div
-                      className={getSeatClasses(seat)}
-                      onClick={() => {
-                        if (seat.status === 'available') {
-                          onSelectSeat(seat);
-                        }
-                      }}
-                    >
-                      <span>{seat.number}</span>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </React.Fragment>
-          ))}
-        </div>
+        <ScrollArea className="overflow-x-auto w-full">
+          <div className="grid grid-cols-6 gap-1 sm:gap-2 mt-3 mx-auto max-w-md min-w-[600px]">
+            {grid.map((row, rowIndex) => (
+              <React.Fragment key={`${deckType}-row-${rowIndex}`}>
+                {row.map((seat, colIndex) => (
+                  <div 
+                    key={`${deckType}-${rowIndex}-${colIndex}`} 
+                    className={`relative ${!seat ? 'opacity-0' : ''} ${
+                      // Increased pathway between rows 2 and 3
+                      rowIndex === 2 ? 'mt-16' : ''
+                    }`}
+                  >
+                    {seat && (
+                      <div
+                        className={getSeatClasses(seat)}
+                        onClick={() => {
+                          if (seat.status === 'available') {
+                            onSelectSeat(seat);
+                          }
+                        }}
+                      >
+                        <span>{seat.number}</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </React.Fragment>
+            ))}
+          </div>
+        </ScrollArea>
       </div>
     );
   };
@@ -335,49 +336,53 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
         </div>
         
         {/* First two rows - 2x6 grid - ensure consistent width on mobile */}
-        <div className="grid grid-cols-6 gap-1 sm:gap-2 mx-auto max-w-md">
-          {firstTwoRows.map((seat, index) => (
-            <div 
-              key={`lower-mixed-${index}`}
-              className="relative"
-            >
-              <div
-                className={getSeatClasses(seat)}
-                onClick={() => {
-                  if (seat.status === 'available') {
-                    onSelectSeat(seat);
-                  }
-                }}
+        <ScrollArea className="overflow-x-auto w-full">
+          <div className="grid grid-cols-6 gap-1 sm:gap-2 mx-auto max-w-md min-w-[600px]">
+            {firstTwoRows.map((seat, index) => (
+              <div 
+                key={`lower-mixed-${index}`}
+                className="relative"
               >
-                <span>{seat.number}</span>
+                <div
+                  className={getSeatClasses(seat)}
+                  onClick={() => {
+                    if (seat.status === 'available') {
+                      onSelectSeat(seat);
+                    }
+                  }}
+                >
+                  <span>{seat.number}</span>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </ScrollArea>
         
         {/* Spacer - pathway - increased height */}
         <div className="h-16"></div>
         
         {/* Third row - 1x12 grid (seater format) - ensure equal cells on mobile */}
-        <div className="grid grid-cols-12 gap-1 mx-auto max-w-md">
-          {thirdRow.map((seat, index) => (
-            <div 
-              key={`lower-mixed-third-${index}`}
-              className="relative"
-            >
-              <div
-                className={getSeatClasses(seat)}
-                onClick={() => {
-                  if (seat.status === 'available') {
-                    onSelectSeat(seat);
-                  }
-                }}
+        <ScrollArea className="overflow-x-auto w-full mt-4">
+          <div className="grid grid-cols-12 gap-1 mx-auto max-w-md min-w-[800px]">
+            {thirdRow.map((seat, index) => (
+              <div 
+                key={`lower-mixed-third-${index}`}
+                className="relative"
               >
-                <span>{seat.number}</span>
+                <div
+                  className={getSeatClasses(seat)}
+                  onClick={() => {
+                    if (seat.status === 'available') {
+                      onSelectSeat(seat);
+                    }
+                  }}
+                >
+                  <span>{seat.number}</span>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </ScrollArea>
       </div>
     );
   };
@@ -415,49 +420,53 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
         </div>
         
         {/* First two rows - 2x12 grid - ensure fixed width on mobile */}
-        <div className="grid grid-cols-12 gap-1 mx-auto max-w-md">
-          {firstTwoRows.map((seat, index) => (
-            <div 
-              key={`lower-seater-${index}`}
-              className="relative"
-            >
-              <div
-                className={getSeatClasses(seat)}
-                onClick={() => {
-                  if (seat.status === 'available') {
-                    onSelectSeat(seat);
-                  }
-                }}
+        <ScrollArea className="overflow-x-auto w-full">
+          <div className="grid grid-cols-12 gap-1 mx-auto max-w-md min-w-[800px]">
+            {firstTwoRows.map((seat, index) => (
+              <div 
+                key={`lower-seater-${index}`}
+                className="relative"
               >
-                <span>{seat.number}</span>
+                <div
+                  className={getSeatClasses(seat)}
+                  onClick={() => {
+                    if (seat.status === 'available') {
+                      onSelectSeat(seat);
+                    }
+                  }}
+                >
+                  <span>{seat.number}</span>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </ScrollArea>
         
         {/* Spacer - pathway - increased height */}
         <div className="h-16"></div>
         
         {/* Third row - 1x12 grid (also seater) - ensure equal cells on mobile */}
-        <div className="grid grid-cols-12 gap-1 mx-auto max-w-md">
-          {thirdRow.map((seat, index) => (
-            <div 
-              key={`lower-seater-third-${index}`}
-              className="relative"
-            >
-              <div
-                className={getSeatClasses(seat)}
-                onClick={() => {
-                  if (seat.status === 'available') {
-                    onSelectSeat(seat);
-                  }
-                }}
+        <ScrollArea className="overflow-x-auto w-full mt-4">
+          <div className="grid grid-cols-12 gap-1 mx-auto max-w-md min-w-[800px]">
+            {thirdRow.map((seat, index) => (
+              <div 
+                key={`lower-seater-third-${index}`}
+                className="relative"
               >
-                <span>{seat.number}</span>
+                <div
+                  className={getSeatClasses(seat)}
+                  onClick={() => {
+                    if (seat.status === 'available') {
+                      onSelectSeat(seat);
+                    }
+                  }}
+                >
+                  <span>{seat.number}</span>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </ScrollArea>
       </div>
     );
   };
@@ -495,49 +504,53 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
         </div>
         
         {/* First two rows - 2x12 grid - ensure fixed width on mobile */}
-        <div className="grid grid-cols-12 gap-1 mx-auto max-w-md">
-          {firstTwoRows.map((seat, index) => (
-            <div 
-              key={`lower-seatersleeper-${index}`}
-              className="relative"
-            >
-              <div
-                className={getSeatClasses(seat)}
-                onClick={() => {
-                  if (seat.status === 'available') {
-                    onSelectSeat(seat);
-                  }
-                }}
+        <ScrollArea className="overflow-x-auto w-full">
+          <div className="grid grid-cols-12 gap-1 mx-auto max-w-md min-w-[800px]">
+            {firstTwoRows.map((seat, index) => (
+              <div 
+                key={`lower-seatersleeper-${index}`}
+                className="relative"
               >
-                <span>{seat.number}</span>
+                <div
+                  className={getSeatClasses(seat)}
+                  onClick={() => {
+                    if (seat.status === 'available') {
+                      onSelectSeat(seat);
+                    }
+                  }}
+                >
+                  <span>{seat.number}</span>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </ScrollArea>
         
         {/* Spacer - pathway - increased height */}
         <div className="h-16"></div>
         
         {/* Third row - 1x6 grid - ensure equal cells on mobile */}
-        <div className="grid grid-cols-6 gap-1 sm:gap-2 mx-auto max-w-md">
-          {thirdRow.map((seat, index) => (
-            <div 
-              key={`lower-seatersleeper-third-${index}`}
-              className="relative"
-            >
-              <div
-                className={getSeatClasses(seat)}
-                onClick={() => {
-                  if (seat.status === 'available') {
-                    onSelectSeat(seat);
-                  }
-                }}
+        <ScrollArea className="overflow-x-auto w-full mt-4">
+          <div className="grid grid-cols-6 gap-1 sm:gap-2 mx-auto max-w-md min-w-[600px]">
+            {thirdRow.map((seat, index) => (
+              <div 
+                key={`lower-seatersleeper-third-${index}`}
+                className="relative"
               >
-                <span>{seat.number}</span>
+                <div
+                  className={getSeatClasses(seat)}
+                  onClick={() => {
+                    if (seat.status === 'available') {
+                      onSelectSeat(seat);
+                    }
+                  }}
+                >
+                  <span>{seat.number}</span>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </ScrollArea>
       </div>
     );
   };
@@ -625,8 +638,11 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
       )}
       
       <div className="bg-white border border-far-lightgray rounded-lg p-4 sm:p-6">
-        {/* Render Lower Deck first - matching the requirement */}
+        {/* Render Lower Deck first */}
         {renderDeck(lowerDeckSeats, 'lower')}
+        
+        {/* Add visible separator between decks */}
+        <Separator className="my-6 bg-blue-100 h-[2px]" />
         
         {/* Render Upper Deck below */}
         {renderDeck(upperDeckSeats, 'upper')}
