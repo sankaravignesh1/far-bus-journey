@@ -1,1 +1,29 @@
+
 project_id = "ndcvvnssrranofnxfcdy"
+
+[functions.sync-cities]
+verify_jwt = false
+
+[functions.sync-operators]
+verify_jwt = false
+
+[functions.sync-buses]
+verify_jwt = false
+
+[functions.lock-seats]
+verify_jwt = false
+
+[functions.process-payment]
+verify_jwt = false
+
+[functions.fetch-coupons]
+verify_jwt = false
+
+[functions.cleanup-locked-seats]
+verify_jwt = false
+
+[functions.init-database]
+verify_jwt = false
+
+[functions.cron-tasks]
+verify_jwt = false
