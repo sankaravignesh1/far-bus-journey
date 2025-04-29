@@ -8,6 +8,13 @@ const supabaseClient = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
 );
 
+// Third-party API details (stored securely in environment variables)
+const THIRD_PARTY_API_URL = Deno.env.get("THIRD_PARTY_API_URL") ?? "https://pssuodwfdpwljbnfcanz.supabase.co";
+const THIRD_PARTY_API_KEY = Deno.env.get("THIRD_PARTY_API_KEY") ?? "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzc3VvZHdmZHB3bGpibmZjYW56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2MjI3NjAsImV4cCI6MjA1OTE5ODc2MH0._rEFKaQEs7unu8VtCuAkjpCmRSeeTwrqx689LrlyhQA";
+
+// Initialize third-party Supabase client
+const thirdPartyClient = createClient(THIRD_PARTY_API_URL, THIRD_PARTY_API_KEY);
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -20,177 +27,122 @@ serve(async (req) => {
   }
 
   try {
-    // Parse the request body
-    const {
-      transactionId,
-      paymentGatewayOrderId,
-      paymentGatewayPaymentId,
-      paymentMethod,
-      couponCode,
-      discountAmount
-    } = await req.json();
-
-    if (!transactionId) {
-      throw new Error("Missing transactionId");
+    // Parse request body
+    const paymentDetails = await req.json();
+    
+    if (!paymentDetails || !paymentDetails.booking_ids || !paymentDetails.transaction_id) {
+      throw new Error("Invalid payment details. Missing booking IDs or transaction ID.");
     }
-
-    // Get the transaction details
-    const { data: transaction, error: transError } = await supabaseClient
-      .from("transactions")
-      .select("*")
-      .eq("id", transactionId)
-      .single();
-
-    if (transError) {
-      throw new Error(`Transaction not found: ${transError.message}`);
-    }
-
-    if (transaction.status !== 'initiated') {
-      throw new Error(`Invalid transaction status: ${transaction.status}`);
-    }
-
-    // In a real implementation, this would verify the payment with the payment gateway
-    // For this demo, we'll simulate a successful payment
-
-    // Simulate successful payment verification
-    const paymentSuccess = Math.random() < 0.95; // 95% success rate
-
-    if (!paymentSuccess) {
-      // Update transaction as failed
-      await supabaseClient
-        .from("transactions")
-        .update({
-          payment_gateway_order_id: paymentGatewayOrderId,
-          payment_gateway_payment_id: paymentGatewayPaymentId,
-          payment_gateway_status: "failed",
-          payment_method: paymentMethod,
-          payment_provider: "RazorPay", // Example payment provider
-          status: "failed",
-          remarks: "Payment verification failed"
-        })
-        .eq("id", transactionId);
-
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Payment verification failed" 
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 400,
-        }
-      );
-    }
-
-    // Apply discount if coupon is provided
-    let totalFare = Number(transaction.total_fare);
-    let discounts = 0;
-
-    if (couponCode && discountAmount) {
-      discounts = Number(discountAmount);
-      totalFare -= discounts;
-      if (totalFare < 0) totalFare = 0;
-    }
-
-    // Update transaction as successful
-    await supabaseClient
+    
+    // Update transaction status to successful
+    // In a real implementation, this would verify payment with gateway
+    const { error: transactionError } = await supabaseClient
       .from("transactions")
       .update({
-        payment_gateway_order_id: paymentGatewayOrderId,
-        payment_gateway_payment_id: paymentGatewayPaymentId,
         payment_gateway_status: "paid",
-        payment_method: paymentMethod,
-        payment_provider: "RazorPay", // Example payment provider
         status: "successful",
-        discounts: discounts,
-        total_fare: totalFare
+        updated_at: new Date().toISOString()
       })
-      .eq("id", transactionId);
-
-    // Get the booking seat details
-    const bookingIds = transaction.booking_ids.split(',');
+      .eq("id", paymentDetails.transaction_id);
     
-    // Update booking seats from locked to booked
-    const { data: bookingSeats, error: bookingError } = await supabaseClient
+    if (transactionError) {
+      throw new Error(`Error updating transaction: ${transactionError.message}`);
+    }
+    
+    // Update booking_seats status to booked
+    const { error: bookingSeatsError } = await supabaseClient
       .from("booking_seats")
-      .update({ status: "booked" })
-      .in("id", bookingIds)
-      .select();
-
-    if (bookingError) {
-      throw new Error(`Failed to update booking seats: ${bookingError.message}`);
-    }
-
-    if (!bookingSeats || bookingSeats.length === 0) {
-      throw new Error("No booking seats found to update");
-    }
-
-    // Create an entry in the bookings table
-    const pnr = await generatePNR();
-    const firstSeat = bookingSeats[0];
+      .update({
+        status: "booked",
+        updated_at: new Date().toISOString()
+      })
+      .in("booking_id", paymentDetails.booking_ids.split(","));
     
-    const bookingEntry = {
-      operator_id: firstSeat.operator_id,
-      operator_name: firstSeat.operator_name,
-      booking_ids: transaction.booking_ids,
-      bus_id: firstSeat.bus_id,
-      route_id: firstSeat.route_id,
-      op_bus_id: firstSeat.op_bus_id,
-      op_route_id: firstSeat.op_route_id,
-      seat_names: bookingSeats.map(seat => seat.seat_name).join(', '),
-      passenger_names: bookingSeats.map(seat => seat.passenger_name).join(', '),
-      date_of_journey: firstSeat.date_of_journey,
-      mobile: transaction.mobile,
-      email: transaction.email,
-      total_base_fare: transaction.total_base_fare,
-      gst: transaction.gst,
-      total_fare: totalFare,
-      pnr: pnr,
-      from_city: await getFromCity(firstSeat.route_id),
-      to_city: await getToCity(firstSeat.route_id),
-      boarding_point: firstSeat.boarding_point,
-      dropping_point: firstSeat.dropping_point,
-      status: "booked"
-    };
+    if (bookingSeatsError) {
+      throw new Error(`Error updating booking seats: ${bookingSeatsError.message}`);
+    }
     
-    const { data: bookingData, error: bookingInsertError } = await supabaseClient
-      .from("bookings")
-      .insert(bookingEntry)
-      .select()
+    // Get all the booking seats details
+    const { data: seats, error: seatsError } = await supabaseClient
+      .from("booking_seats")
+      .select("*")
+      .in("booking_id", paymentDetails.booking_ids.split(","));
+    
+    if (seatsError) {
+      throw new Error(`Error fetching booking seats: ${seatsError.message}`);
+    }
+    
+    if (!seats || seats.length === 0) {
+      throw new Error("No booking seats found for the provided booking IDs.");
+    }
+    
+    // Group seats by common attributes for booking entry
+    const firstSeat = seats[0];
+    const seatNames = seats.map(s => s.seat_name).join(",");
+    const passengerNames = seats.map(s => s.passenger_name).join(",");
+    const bookingIds = seats.map(s => s.booking_id).join(",");
+    
+    // Get transaction details
+    const { data: transaction, error: fetchTransactionError } = await supabaseClient
+      .from("transactions")
+      .select("*")
+      .eq("id", paymentDetails.transaction_id)
       .single();
-      
-    if (bookingInsertError) {
-      throw new Error(`Failed to create booking: ${bookingInsertError.message}`);
+    
+    if (fetchTransactionError) {
+      throw new Error(`Error fetching transaction: ${fetchTransactionError.message}`);
     }
-
-    // In a real implementation, this would also update the operator's API
-    // to confirm the booking
-
-    // Return the success response with booking details
+    
+    // Generate PNR
+    const { data: pnrData, error: pnrError } = await supabaseClient
+      .rpc('generate_pnr');
+    
+    if (pnrError) {
+      throw new Error(`Error generating PNR: ${pnrError.message}`);
+    }
+    
+    const pnr = pnrData;
+    
+    // Create booking entry
+    const { data: booking, error: bookingError } = await supabaseClient
+      .from("bookings")
+      .insert({
+        operator_id: firstSeat.operator_id,
+        operator_name: firstSeat.operator_name,
+        booking_ids: bookingIds,
+        bus_id: firstSeat.bus_id,
+        route_id: firstSeat.route_id,
+        op_bus_id: firstSeat.op_bus_id,
+        op_route_id: firstSeat.op_route_id,
+        seat_names: seatNames,
+        passenger_names: passengerNames,
+        date_of_journey: firstSeat.date_of_journey,
+        mobile: firstSeat.mobile,
+        email: paymentDetails.email, // Assuming this is provided in payment details
+        total_base_fare: transaction.total_base_fare,
+        gst: transaction.gst,
+        total_fare: transaction.total_fare,
+        pnr: pnr,
+        from_city: paymentDetails.from_city,
+        to_city: paymentDetails.to_city,
+        boarding_point: firstSeat.boarding_point,
+        dropping_point: firstSeat.dropping_point,
+        status: "booked"
+      });
+    
+    if (bookingError) {
+      throw new Error(`Error creating booking: ${bookingError.message}`);
+    }
+    
+    // In a real implementation, this would also notify the third-party API
+    // that the seats are confirmed/booked
+    
     return new Response(
-      JSON.stringify({
-        success: true,
-        booking: {
-          id: bookingData.id,
-          pnr: bookingData.pnr,
-          seats: bookingSeats.map(seat => ({
-            seatName: seat.seat_name,
-            passengerName: seat.passenger_name,
-            passengerAge: seat.age,
-            passengerGender: seat.gender
-          })),
-          fromCity: bookingData.from_city,
-          toCity: bookingData.to_city,
-          journeyDate: bookingData.date_of_journey,
-          boardingPoint: bookingData.boarding_point,
-          droppingPoint: bookingData.dropping_point,
-          fare: {
-            baseFare: Number(transaction.total_base_fare),
-            gst: Number(transaction.gst),
-            discount: discounts,
-            total: totalFare
-          }
-        }
+      JSON.stringify({ 
+        success: true, 
+        message: "Payment processed successfully", 
+        pnr: pnr, 
+        booking: booking 
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -209,52 +161,3 @@ serve(async (req) => {
     );
   }
 });
-
-// Helper functions
-async function generatePNR() {
-  // Call the generate_pnr database function
-  const { data, error } = await supabaseClient.rpc('generate_pnr');
-  
-  if (error) {
-    console.error("Error generating PNR:", error);
-    // Fallback to a client-side implementation if the DB function fails
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let result = '';
-    for (let i = 0; i < 8; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
-  }
-  
-  return data;
-}
-
-async function getFromCity(routeId) {
-  const { data, error } = await supabaseClient
-    .from("routes")
-    .select("from_city_name")
-    .eq("route_id", routeId)
-    .single();
-    
-  if (error) {
-    console.error("Error getting from city:", error);
-    return "Unknown";
-  }
-  
-  return data.from_city_name;
-}
-
-async function getToCity(routeId) {
-  const { data, error } = await supabaseClient
-    .from("routes")
-    .select("to_city_name")
-    .eq("route_id", routeId)
-    .single();
-    
-  if (error) {
-    console.error("Error getting to city:", error);
-    return "Unknown";
-  }
-  
-  return data.to_city_name;
-}

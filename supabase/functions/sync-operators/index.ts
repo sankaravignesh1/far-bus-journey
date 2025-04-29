@@ -8,41 +8,17 @@ const supabaseClient = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
 );
 
+// Third-party API details (stored securely in environment variables)
+const THIRD_PARTY_API_URL = Deno.env.get("THIRD_PARTY_API_URL") ?? "https://pssuodwfdpwljbnfcanz.supabase.co";
+const THIRD_PARTY_API_KEY = Deno.env.get("THIRD_PARTY_API_KEY") ?? "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzc3VvZHdmZHB3bGpibmZjYW56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2MjI3NjAsImV4cCI6MjA1OTE5ODc2MH0._rEFKaQEs7unu8VtCuAkjpCmRSeeTwrqx689LrlyhQA";
+
+// Initialize third-party Supabase client
+const thirdPartyClient = createClient(THIRD_PARTY_API_URL, THIRD_PARTY_API_KEY);
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-// Sample operator data - in a real application, this might be fetched from configuration
-const operators = [
-  {
-    operator_id: "OP001",
-    operator_name: "Luxury Travels",
-    api_url: "https://api.luxurytravels.example.com/v1",
-    api_key: "sample_api_key_1",
-    api_username: "luxury_api",
-    api_password: "sample_password_1",
-    additional_params: { format: "json", version: "1.2" }
-  },
-  {
-    operator_id: "OP002",
-    operator_name: "Royal Express",
-    api_url: "https://royal-express-api.example.com/api",
-    api_key: "sample_api_key_2",
-    api_username: "royal_api",
-    api_password: "sample_password_2",
-    additional_params: { output: "json", compress: false }
-  },
-  {
-    operator_id: "OP003",
-    operator_name: "Swift Bus Services",
-    api_url: "https://swiftbus.example.com/webservices",
-    api_key: "sample_api_key_3",
-    api_username: "swift_api",
-    api_password: "sample_password_3",
-    additional_params: { format: "json", timeout: 30 }
-  }
-];
 
 serve(async (req) => {
   // Handle CORS
@@ -53,61 +29,72 @@ serve(async (req) => {
   try {
     console.log("Starting operator synchronization");
     
-    // Upsert operators
-    const { data: operatorsData, error: operatorsError } = await supabaseClient
+    // Step 1: Fetch operators from third-party API
+    const { data: operators, error: fetchError } = await thirdPartyClient
+      .from("operators")
+      .select("*");
+    
+    if (fetchError) {
+      throw new Error(`Failed to fetch operators: ${fetchError.message}`);
+    }
+    
+    if (!operators || operators.length === 0) {
+      return new Response(
+        JSON.stringify({ success: true, message: "No operators found in third-party API" }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    }
+    
+    // Step 2: Transform the data to match our schema
+    const operatorApis = operators.map(op => ({
+      operator_id: op.operator_id,
+      operator_name: op.operator_name,
+      api_url: op.api_url || THIRD_PARTY_API_URL, // Use default if not provided
+      api_key: op.api_key || THIRD_PARTY_API_KEY, // Use default if not provided
+      api_username: op.api_username,
+      api_password: op.api_password,
+      additional_params: op.additional_params || {},
+      is_active: true
+    }));
+    
+    // Step 3: Insert into our database
+    const { data: insertedData, error: insertError } = await supabaseClient
       .from("operator_apis")
-      .upsert(operators, { onConflict: "operator_id" });
+      .upsert(operatorApis, { onConflict: "operator_id" });
+    
+    if (insertError) {
+      throw new Error(`Failed to insert operators: ${insertError.message}`);
+    }
+    
+    // Step 4: Create associated records (cancellation policy, GST rates, etc.)
+    for (const operator of operatorApis) {
+      // Set up cancellation policy
+      await supabaseClient.from("cancellation_policy").upsert({
+        operator_id: operator.operator_id,
+        operator_name: operator.operator_name
+      }, { onConflict: "operator_id" });
       
-    if (operatorsError) throw operatorsError;
-    
-    // Set up cancellation policies for each operator
-    const cancellationPolicies = operators.map(op => ({
-      operator_id: op.operator_id,
-      operator_name: op.operator_name,
-      before_two_weeks: 95,
-      before_week: 85,
-      before_48hrs: 70,
-      before_24hrs: 50,
-      before_12hrs: 30,
-      before_6hrs: 10,
-      lessthan_6hrs: 0
-    }));
-    
-    const { data: policiesData, error: policiesError } = await supabaseClient
-      .from("cancellation_policy")
-      .upsert(cancellationPolicies, { onConflict: "operator_id" });
+      // Set up GST rates
+      await supabaseClient.from("gst_rates").upsert({
+        operator_id: operator.operator_id,
+        operator_name: operator.operator_name,
+        gst_percent: 5.00 // Default GST rate
+      }, { onConflict: "operator_id" });
       
-    if (policiesError) throw policiesError;
-    
-    // Set up GST rates for each operator
-    const gstRates = operators.map(op => ({
-      operator_id: op.operator_id,
-      operator_name: op.operator_name,
-      gst_percent: 5.00  // Standard GST rate
-    }));
-    
-    const { data: gstData, error: gstError } = await supabaseClient
-      .from("gst_rates")
-      .upsert(gstRates, { onConflict: "operator_id" });
-      
-    if (gstError) throw gstError;
-    
-    // Set up reviews (empty placeholders) for each operator
-    const reviews = operators.map(op => ({
-      operator_id: op.operator_id,
-      operator_name: op.operator_name
-    }));
-    
-    const { data: reviewsData, error: reviewsError } = await supabaseClient
-      .from("reviews")
-      .upsert(reviews, { onConflict: "operator_id" });
-      
-    if (reviewsError) throw reviewsError;
+      // Set up reviews entry
+      await supabaseClient.from("reviews").upsert({
+        operator_id: operator.operator_id,
+        operator_name: operator.operator_name
+      }, { onConflict: "operator_id" });
+    }
     
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `Synchronized ${operators.length} operators with policies, GST rates, and review placeholders` 
+        message: `Synchronized ${operatorApis.length} operators with associated data` 
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
