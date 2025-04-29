@@ -24,7 +24,8 @@ export const CityService = {
     const { data, error } = await supabase
       .from('cities')
       .select('*')
-      .eq('is_popular', true);
+      .eq('is_popular', true)
+      .order('name');
       
     if (error) {
       console.error('Error fetching popular cities:', error);
@@ -91,6 +92,23 @@ export const BusService = {
     }
     
     return data;
+  },
+
+  // New method to subscribe to realtime bus updates
+  subscribeToRealtimeBusUpdates(callback: (payload: any) => void) {
+    const channel = supabase.channel('public:bus_list')
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'bus_list' 
+      }, payload => {
+        callback(payload);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }
 };
 
@@ -109,6 +127,24 @@ export const SeatService = {
     }
     
     return data || [];
+  },
+
+  // New method to subscribe to realtime seat updates
+  subscribeToRealtimeSeatUpdates(busId: string, callback: (payload: any) => void) {
+    const channel = supabase.channel('public:bus_layout')
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'bus_layout',
+        filter: `bus_id=eq.${busId}` 
+      }, payload => {
+        callback(payload);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }
 };
 
@@ -314,5 +350,26 @@ export const CouponService = {
       discountAmount: finalDiscount,
       message: `Coupon applied successfully! ₹${finalDiscount.toFixed(2)} discount`
     };
+  }
+};
+
+// Database Initialization Service - to seed the database with real data
+export const InitDatabaseService = {
+  async initializeDatabase() {
+    try {
+      const { data, error } = await supabase.functions.invoke('init-database', {
+        body: {}
+      });
+      
+      if (error) {
+        console.error('Error initializing database:', error);
+        throw new Error(error.message);
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Error initializing database:', error);
+      throw error;
+    }
   }
 };

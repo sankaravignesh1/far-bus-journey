@@ -10,6 +10,9 @@ verify_jwt = false
 [functions.sync-buses]
 verify_jwt = false
 
+[functions.sync-seat-availability]
+verify_jwt = false
+
 [functions.lock-seats]
 verify_jwt = false
 

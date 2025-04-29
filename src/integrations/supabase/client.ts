@@ -6,7 +6,11 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://ndcvvnssrranofnxfcdy.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kY3Z2bnNzcnJhbm9mbnhmY2R5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2MjQyNzUsImV4cCI6MjA1OTIwMDI3NX0.pm2lJewlbINNXbMGlEWVmWXXXvtHj0wbB6g1qFumMJY";
 
+// Third-party API details are only stored server-side in edge functions
+// Do not reference these directly in client-side code
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
