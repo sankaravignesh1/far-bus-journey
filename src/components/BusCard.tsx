@@ -46,7 +46,7 @@ const BusCard: React.FC<BusCardProps> = ({ bus, journeyDate }) => {
         <div className="lg:border-l lg:border-l-far-lightgray lg:pl-6">
           <div className="hidden lg:block mb-2 text-sm text-far-black/70">Amenities</div>
           <div className="flex flex-wrap gap-2">
-            {bus.amenities.map((amenity, index) => (
+            {Array.isArray(bus.amenities) && bus.amenities.map((amenity, index) => (
               <span key={index} className="text-xs px-2 py-1 rounded-full bg-far-cream border border-far-lightgray">
                 {amenity}
               </span>

@@ -1,17 +1,18 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import SearchForm from '../components/SearchForm';
 import BusList from '../components/BusList';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { buses } from '../data/mockData';
-import { ArrowLeft, ChevronDown } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { 
   Accordion, 
   AccordionContent, 
   AccordionItem, 
   AccordionTrigger 
 } from '@/components/ui/accordion';
+import { RouteService, BusService } from '../services/api';
+import { Bus } from '../types';
 
 const BusListing = () => {
   const location = useLocation();
@@ -20,6 +21,10 @@ const BusListing = () => {
   const fromCity = queryParams.get('from') || '';
   const toCity = queryParams.get('to') || '';
   const journeyDate = queryParams.get('date') || '';
+
+  const [buses, setBuses] = useState<Bus[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [filters, setFilters] = useState({
     // Departure Time
@@ -50,6 +55,58 @@ const BusListing = () => {
       [filterName]: !prev[filterName as keyof typeof prev]
     }));
   };
+
+  useEffect(() => {
+    const fetchBuses = async () => {
+      if (!fromCity || !toCity || !journeyDate) {
+        setError('Please provide from city, to city and journey date');
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        setLoading(true);
+        setError(null);
+
+        // First get the route ID
+        const route = await RouteService.getRoute(fromCity, toCity);
+        
+        if (!route) {
+          setError(`No routes found from ${fromCity} to ${toCity}`);
+          setLoading(false);
+          return;
+        }
+        
+        // Then fetch buses for this route and date
+        const busesData = await BusService.searchBuses(route.route_id, journeyDate);
+        
+        // Convert the API response to match our Bus type
+        const formattedBuses: Bus[] = busesData.map((bus: any) => ({
+          id: bus.bus_id,
+          name: bus.operator_name,
+          type: bus.bus_type || 'AC',
+          category: bus.bus_category || 'Sleeper',
+          departureTime: bus.departure_time ? bus.departure_time.substring(0, 5) : '00:00',
+          arrivalTime: bus.arrival_time ? bus.arrival_time.substring(0, 5) : '00:00',
+          duration: bus.duration || '0h 0m',
+          availableSeats: bus.available_seats || 0,
+          singleSeats: bus.singleseats_available || 0,
+          fare: bus.starting_fare || 0,
+          amenities: bus.amenities ? (typeof bus.amenities === 'string' ? JSON.parse(bus.amenities) : bus.amenities) : [],
+          layout: bus.bus_category === 'Sleeper' ? '2+1' : 'all-seater', // Default layout based on category
+        }));
+        
+        setBuses(formattedBuses);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching buses:', error);
+        setError('Error fetching buses. Please try again.');
+        setLoading(false);
+      }
+    };
+    
+    fetchBuses();
+  }, [fromCity, toCity, journeyDate]);
 
   // Filter buses based on selected filters
   const filteredBuses = buses.filter(bus => {
@@ -289,7 +346,23 @@ const BusListing = () => {
           </div>
           
           <div className="lg:col-span-3">
-            <BusList buses={filteredBuses} journeyDate={journeyDate} />
+            {loading ? (
+              <div className="card text-center py-10">
+                <p className="text-lg font-medium">Loading buses...</p>
+              </div>
+            ) : error ? (
+              <div className="card text-center py-10">
+                <p className="text-lg font-medium text-red-500">{error}</p>
+                <button 
+                  className="btn-outline mt-4"
+                  onClick={() => navigate('/')}
+                >
+                  Back to Search
+                </button>
+              </div>
+            ) : (
+              <BusList buses={filteredBuses} journeyDate={journeyDate} />
+            )}
           </div>
         </div>
       </div>
