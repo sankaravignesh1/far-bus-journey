@@ -195,7 +195,7 @@ export type Database = {
           {
             foreignKeyName: "booking_seats_seat_id_fkey"
             columns: ["seat_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "bus_layout"
             referencedColumns: ["seat_id"]
           },
@@ -956,8 +956,8 @@ export type Database = {
           gst: number
           id: string
           mobile: string
-          payment_gateway_order_id: string | null
-          payment_gateway_payment_id: string | null
+          payment_gateway_order_id: string
+          payment_gateway_payment_id: string
           payment_gateway_status: string | null
           payment_method: string | null
           payment_provider: string | null
@@ -975,8 +975,8 @@ export type Database = {
           gst: number
           id?: string
           mobile: string
-          payment_gateway_order_id?: string | null
-          payment_gateway_payment_id?: string | null
+          payment_gateway_order_id: string
+          payment_gateway_payment_id: string
           payment_gateway_status?: string | null
           payment_method?: string | null
           payment_provider?: string | null
@@ -994,8 +994,8 @@ export type Database = {
           gst?: number
           id?: string
           mobile?: string
-          payment_gateway_order_id?: string | null
-          payment_gateway_payment_id?: string | null
+          payment_gateway_order_id?: string
+          payment_gateway_payment_id?: string
           payment_gateway_status?: string | null
           payment_method?: string | null
           payment_provider?: string | null

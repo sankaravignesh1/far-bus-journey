@@ -32,92 +32,105 @@ serve(async (req) => {
     for (const funcName of syncFunctions) {
       console.log(`Calling ${funcName} function...`);
       
-      const response = await fetch(
-        `${Deno.env.get("SUPABASE_URL")}/functions/v1/${funcName}`,
-        {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({})
-        }
-      );
-      
-      if (!response.ok) {
-        throw new Error(`Failed to call ${funcName}: ${response.statusText}`);
-      }
-      
-      const result = await response.json();
-      results.push({ function: funcName, result });
-      
-      console.log(`${funcName} completed successfully`);
-    }
-    
-    // Create some sample coupons
-    console.log("Creating sample coupons...");
-    
-    // Clear existing coupons
-    await supabaseClient
-      .from("coupons")
-      .delete()
-      .gte("id", 0);
-    
-    // Add sample coupons for major cities
-    const sampleCoupons = [
-      {
-        coupon_code: "FIRST50",
-        discount: 5,
-        min_fare: 500,
-        max_discount: 50,
-        valid_from: new Date().toISOString().split('T')[0],
-        valid_to: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      },
-      {
-        from_city: "Mumbai",
-        from_city_id: "BOM",
-        coupon_code: "MUMBAI10",
-        discount: 10,
-        min_fare: 800,
-        max_discount: 100,
-        valid_from: new Date().toISOString().split('T')[0],
-        valid_to: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      },
-      {
-        from_city: "Delhi",
-        from_city_id: "DEL",
-        coupon_code: "DELHI10",
-        discount: 10,
-        min_fare: 800,
-        max_discount: 100,
-        valid_from: new Date().toISOString().split('T')[0],
-        valid_to: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      },
-      {
-        from_city: "Bangalore",
-        from_city_id: "BLR",
-        coupon_code: "BLR10",
-        discount: 10,
-        min_fare: 800,
-        max_discount: 100,
-        valid_from: new Date().toISOString().split('T')[0],
-        valid_to: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      }
-    ];
-    
-    for (const coupon of sampleCoupons) {
-      const { error } = await supabaseClient
-        .from("coupons")
-        .insert(coupon);
+      try {
+        const response = await fetch(
+          `${Deno.env.get("SUPABASE_URL")}/functions/v1/${funcName}`,
+          {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({})
+          }
+        );
         
-      if (error) {
-        console.error(`Failed to create coupon ${coupon.coupon_code}: ${error.message}`);
-      } else {
-        console.log(`Created coupon: ${coupon.coupon_code}`);
+        let result;
+        try {
+          result = await response.json();
+        } catch (e) {
+          result = { error: "Could not parse response" };
+        }
+        
+        results.push({ function: funcName, status: response.status, result });
+        
+        if (!response.ok) {
+          console.log(`${funcName} returned status ${response.status}`);
+          console.log(`Response body: ${JSON.stringify(result)}`);
+        } else {
+          console.log(`${funcName} completed successfully`);
+        }
+      } catch (error) {
+        console.error(`Error calling ${funcName}: ${error.message}`);
+        results.push({ function: funcName, error: error.message });
       }
     }
     
-    // Create travel policies if they don't exist
+    // Check if we already have sample coupons
+    const { data: existingCoupons } = await supabaseClient
+      .from("coupons")
+      .select("id")
+      .limit(1);
+      
+    if (!existingCoupons || existingCoupons.length === 0) {
+      console.log("Creating sample coupons...");
+      
+      // Add sample coupons for major cities
+      const sampleCoupons = [
+        {
+          coupon_code: "FIRST50",
+          discount: 5,
+          min_fare: 500,
+          max_discount: 50,
+          valid_from: new Date().toISOString().split('T')[0],
+          valid_to: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        },
+        {
+          from_city: "Mumbai",
+          from_city_id: "BOM",
+          coupon_code: "MUMBAI10",
+          discount: 10,
+          min_fare: 800,
+          max_discount: 100,
+          valid_from: new Date().toISOString().split('T')[0],
+          valid_to: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        },
+        {
+          from_city: "Delhi",
+          from_city_id: "DEL",
+          coupon_code: "DELHI10",
+          discount: 10,
+          min_fare: 800,
+          max_discount: 100,
+          valid_from: new Date().toISOString().split('T')[0],
+          valid_to: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        },
+        {
+          from_city: "Bangalore",
+          from_city_id: "BLR",
+          coupon_code: "BLR10",
+          discount: 10,
+          min_fare: 800,
+          max_discount: 100,
+          valid_from: new Date().toISOString().split('T')[0],
+          valid_to: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        }
+      ];
+      
+      for (const coupon of sampleCoupons) {
+        const { error } = await supabaseClient
+          .from("coupons")
+          .upsert(coupon);
+          
+        if (error) {
+          console.error(`Failed to create coupon ${coupon.coupon_code}: ${error.message}`);
+        } else {
+          console.log(`Created coupon: ${coupon.coupon_code}`);
+        }
+      }
+    }
+    
+    // Check and create travel policies if they don't exist
     const { data: existingPolicies } = await supabaseClient
       .from("travel_policy")
       .select("*");

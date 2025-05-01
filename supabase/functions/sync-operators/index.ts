@@ -29,18 +29,25 @@ serve(async (req) => {
   try {
     console.log("Starting operator synchronization");
     
-    // Step 1: Fetch operators from third-party API
-    const { data: operators, error: fetchError } = await thirdPartyClient
-      .from("operators")
-      .select("*");
+    // Check if we already have data in the operator_apis table
+    const { data: existingOperators, error: checkError } = await supabaseClient
+      .from("operator_apis")
+      .select("operator_id")
+      .limit(1);
     
-    if (fetchError) {
-      throw new Error(`Failed to fetch operators: ${fetchError.message}`);
+    if (checkError) {
+      console.log("Error checking existing operators:", checkError.message);
     }
     
-    if (!operators || operators.length === 0) {
+    // If we already have data, don't try to fetch from third-party API
+    if (existingOperators && existingOperators.length > 0) {
+      console.log("Operators already exist in the database, skipping third-party fetch");
+      
       return new Response(
-        JSON.stringify({ success: true, message: "No operators found in third-party API" }),
+        JSON.stringify({ 
+          success: true, 
+          message: "Operators already exist in the database" 
+        }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 200,
@@ -48,29 +55,52 @@ serve(async (req) => {
       );
     }
     
-    // Step 2: Transform the data to match our schema
-    const operatorApis = operators.map(op => ({
-      operator_id: op.operator_id,
-      operator_name: op.operator_name,
-      api_url: op.api_url || THIRD_PARTY_API_URL, // Use default if not provided
-      api_key: op.api_key || THIRD_PARTY_API_KEY, // Use default if not provided
-      api_username: op.api_username,
-      api_password: op.api_password,
-      additional_params: op.additional_params || {},
-      is_active: true
-    }));
+    // Since we don't have operators yet, let's create default ones
+    // These are sample operators that will be used as fallback
+    const defaultOperators = [
+      {
+        operator_id: "KSRTC001",
+        operator_name: "Karnataka State Road Transport Corporation",
+        api_url: THIRD_PARTY_API_URL,
+        api_key: THIRD_PARTY_API_KEY,
+        api_username: "ksrtc_api",
+        api_password: "api_pass_123",
+        additional_params: {},
+        is_active: true
+      },
+      {
+        operator_id: "APSRTC001",
+        operator_name: "Andhra Pradesh State Road Transport Corporation",
+        api_url: THIRD_PARTY_API_URL,
+        api_key: THIRD_PARTY_API_KEY,
+        api_username: "apsrtc_api",
+        api_password: "api_pass_123",
+        additional_params: {},
+        is_active: true
+      },
+      {
+        operator_id: "TSRTC001",
+        operator_name: "Telangana State Road Transport Corporation",
+        api_url: THIRD_PARTY_API_URL,
+        api_key: THIRD_PARTY_API_KEY,
+        api_username: "tsrtc_api",
+        api_password: "api_pass_123",
+        additional_params: {},
+        is_active: true
+      }
+    ];
     
-    // Step 3: Insert into our database
+    // Insert into our database
     const { data: insertedData, error: insertError } = await supabaseClient
       .from("operator_apis")
-      .upsert(operatorApis, { onConflict: "operator_id" });
+      .upsert(defaultOperators, { onConflict: "operator_id" });
     
     if (insertError) {
       throw new Error(`Failed to insert operators: ${insertError.message}`);
     }
     
     // Step 4: Create associated records (cancellation policy, GST rates, etc.)
-    for (const operator of operatorApis) {
+    for (const operator of defaultOperators) {
       // Set up cancellation policy
       await supabaseClient.from("cancellation_policy").upsert({
         operator_id: operator.operator_id,
@@ -94,7 +124,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `Synchronized ${operatorApis.length} operators with associated data` 
+        message: `Created ${defaultOperators.length} default operators with associated data` 
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

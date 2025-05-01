@@ -20,46 +20,76 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Comprehensive list of Indian cities, towns and villages
-// This is a very extensive list of Indian locations including major cities and smaller towns
-const indianLocations = [
-  // States and Union Territories
-  { state: "Andhra Pradesh", cities: ["Hyderabad", "Visakhapatnam", "Vijayawada", "Guntur", "Nellore", "Kurnool", "Rajahmundry", "Tirupati", "Kakinada", "Kadapa", "Anantapur", "Vizianagaram", "Eluru", "Ongole", "Nandyal", "Machilipatnam", "Adoni", "Tenali", "Proddatur", "Chittoor", "Hindupur", "Srikakulam", "Bhimavaram", "Madanapalle", "Guntakal", "Dharmavaram"] },
-  { state: "Arunachal Pradesh", cities: ["Itanagar", "Naharlagun", "Pasighat", "Tawang", "Ziro", "Bomdila", "Aalo", "Tezu", "Roing", "Namsai", "Changlang", "Seppa", "Daporijo", "Yingkiong", "Anini", "Hawai", "Basar", "Longding", "Koloriang", "Tuting"] },
-  { state: "Assam", cities: ["Guwahati", "Silchar", "Dibrugarh", "Jorhat", "Nagaon", "Tinsukia", "Tezpur", "Bongaigaon", "Karimganj", "Sivasagar", "Goalpara", "Diphu", "North Lakhimpur", "Dhubri", "Duliajan", "Kokrajhar", "Golaghat", "Barpeta", "Mangaldoi", "Lanka", "Lumding", "Sonari", "Mariani", "Hojai", "Namrup"] },
-  { state: "Bihar", cities: ["Patna", "Gaya", "Bhagalpur", "Muzaffarpur", "Darbhanga", "Bihar Sharif", "Arrah", "Begusarai", "Purnia", "Katihar", "Munger", "Chapra", "Saharsa", "Hajipur", "Dehri", "Siwan", "Motihari", "Nawada", "Bagaha", "Buxar", "Kishanganj", "Sitamarhi", "Aurangabad", "Jamalpur", "Jehanabad", "Madhubani"] },
-  { state: "Chhattisgarh", cities: ["Raipur", "Bhilai", "Bilaspur", "Korba", "Durg", "Rajnandgaon", "Raigarh", "Jagdalpur", "Ambikapur", "Chirmiri", "Dhamtari", "Mahasamund", "Dalli-Rajhara", "Naila Janjgir", "Tilda Neora", "Kawardha", "Bhatapara", "Kanker", "Dongargarh", "Bijapur", "Pakhanjur", "Kondagaon", "Baikunthpur", "Tifra", "Korea"] },
-  { state: "Goa", cities: ["Panaji", "Margao", "Vasco da Gama", "Mapusa", "Ponda", "Bicholim", "Curchorem", "Sanquelim", "Cuncolim", "Valpoi", "Quepem", "Canacona", "Pernem", "Sanguem", "Mormugao", "Aldona", "Chinchinim", "Benaulim", "Calangute", "Candolim", "Anjuna", "Arambol", "Morjim", "Chapora", "Colva", "Majorda"] },
-  { state: "Gujarat", cities: ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Bhavnagar", "Jamnagar", "Junagadh", "Gandhinagar", "Anand", "Nadiad", "Gandhidham", "Bharuch", "Morbi", "Surendranagar", "Porbandar", "Navsari", "Mehsana", "Veraval", "Bhuj", "Godhra", "Palanpur", "Valsad", "Patan", "Amreli", "Dahod", "Botad"] },
-  { state: "Haryana", cities: ["Faridabad", "Gurgaon", "Panipat", "Ambala", "Yamunanagar", "Rohtak", "Hisar", "Karnal", "Sonipat", "Panchkula", "Kurukshetra", "Sirsa", "Bhiwani", "Bahadurgarh", "Jind", "Thanesar", "Kaithal", "Rewari", "Palwal", "Hansi", "Narnaul", "Fatehabad", "Gohana", "Tohana", "Charkhi Dadri", "Narwana"] },
-  { state: "Himachal Pradesh", cities: ["Shimla", "Mandi", "Solan", "Dharamshala", "Baddi", "Nahan", "Hamirpur", "Una", "Kullu", "Palampur", "Paonta Sahib", "Bilaspur", "Chamba", "Kangra", "Theog", "Parwanoo", "Nurpur", "Rajgarh", "Arki", "Joginder Nagar", "Sunni", "Ghumarwin", "Rewalsar", "Kasauli", "Bakloh", "Dalhousie"] },
-  { state: "Jharkhand", cities: ["Ranchi", "Jamshedpur", "Dhanbad", "Bokaro", "Hazaribagh", "Deoghar", "Giridih", "Ramgarh", "Medininagar", "Chirkunda", "Gumla", "Dumka", "Madhupur", "Chatra", "Chaibasa", "Phusro", "Sahibganj", "Lohardaga", "Simdega", "Godda", "Koderma", "Garhwa", "Mihijam", "Pakur", "Khunti", "Jhumri Tilaiya"] },
-  { state: "Karnataka", cities: ["Bangalore", "Mysore", "Hubli", "Mangalore", "Belgaum", "Gulbarga", "Davanagere", "Bellary", "Bijapur", "Shimoga", "Tumkur", "Raichur", "Bidar", "Hassan", "Robertson Pet", "Udupi", "Hospet", "Bagalkot", "Gadag", "Chitradurga", "Kolar", "Mandya", "Chikmagalur", "Gangavati", "Ranebennur", "Haveri"] },
-  { state: "Kerala", cities: ["Thiruvananthapuram", "Kochi", "Kozhikode", "Thrissur", "Kollam", "Palakkad", "Alappuzha", "Kannur", "Kottayam", "Kasaragod", "Malappuram", "Pathanamthitta", "Idukki", "Wayanad", "Cherthala", "Kalamassery", "Koyilandy", "Thaliparamba", "Thodupuzha", "Guruvayur", "Vatakara", "Payyanur", "Perinthalmanna", "Nedumangad", "Neyyattinkara", "Tirurangadi"] },
-  { state: "Madhya Pradesh", cities: ["Indore", "Bhopal", "Jabalpur", "Gwalior", "Ujjain", "Sagar", "Dewas", "Satna", "Ratlam", "Rewa", "Murwara", "Singrauli", "Burhanpur", "Khandwa", "Morena", "Bhind", "Chhindwara", "Guna", "Shivpuri", "Vidisha", "Damoh", "Mandsaur", "Khargone", "Neemuch", "Pithampur", "Hoshangabad"] },
-  { state: "Maharashtra", cities: ["Mumbai", "Pune", "Nagpur", "Thane", "Nashik", "Aurangabad", "Solapur", "Amravati", "Kolhapur", "Ulhasnagar", "Sangli", "Malegaon", "Jalgaon", "Akola", "Latur", "Dhule", "Ahmednagar", "Chandrapur", "Parbhani", "Ichalkaranji", "Jalna", "Ambarnath", "Bhusawal", "Panvel", "Badlapur", "Beed"] },
-  { state: "Manipur", cities: ["Imphal", "Thoubal", "Kakching", "Ukhrul", "Jiribam", "Lilong", "Churachandpur", "Mayang Imphal", "Bishnupur", "Moirang", "Nambol", "Moreh", "Kangpokpi", "Yairipok", "Sugnu", "Samurou", "Wangjing", "Ningthoukhong", "Oinam", "Kumbi", "Kwakta", "Lamlai", "Sekmai Bazar", "Senapati", "Saikul", "Tamenglong"] },
-  { state: "Meghalaya", cities: ["Shillong", "Tura", "Jowai", "Baghmara", "Nongstoin", "Resubelpara", "Williamnagar", "Nongpoh", "Mawlai", "Madanrting", "Cherrapunji", "Lawsohtun", "Mawroh", "Mairang", "Umlyngka", "Nongthymmai", "Pynthorumkhrah", "Dawki", "Laitumkhrah", "Pynursla", "Khliehriat", "Lad Rymbai", "Umpling", "Mawiong", "Mawsynram"] },
-  { state: "Mizoram", cities: ["Aizawl", "Lunglei", "Champhai", "Saiha", "Kolasib", "Serchhip", "Lawngtlai", "Saitual", "Khawzawl", "Mamit", "Zawlnuam", "Biate", "Vairengte", "Thenzawl", "Tlabung", "Darlawn", "North Vanlaiphai", "Khawhai", "Bairabi", "Hnahthial", "Lengpui", "Buarpui", "Hliappui", "Phullen", "Bualpui"] },
-  { state: "Nagaland", cities: ["Kohima", "Dimapur", "Mokokchung", "Wokha", "Zunheboto", "Tuensang", "Mon", "Phek", "Kiphire", "Longleng", "Peren", "Noklak", "Tseminyu", "Chumoukedima", "Niuland", "Chiephobozou", "Meluri", "Pfutsero", "Jalukie", "Aboi", "Tizit", "Medziphema", "Mangkolemba", "Changtongya", "Longkhim"] },
-  { state: "Odisha", cities: ["Bhubaneswar", "Cuttack", "Rourkela", "Berhampur", "Sambalpur", "Puri", "Balasore", "Bhadrak", "Baripada", "Jharsuguda", "Jeypore", "Barbil", "Bargarh", "Paradip", "Jajpur", "Bhawanipatna", "Dhenkanal", "Kendujhar", "Rayagada", "Sundargarh", "Balangir", "Koraput", "Angul", "Brajarajnagar", "Sonepur", "Phulbani"] },
-  { state: "Punjab", cities: ["Ludhiana", "Amritsar", "Jalandhar", "Patiala", "Bathinda", "Hoshiarpur", "Mohali", "Pathankot", "Moga", "Firozpur", "Batala", "Khanna", "Abohar", "Malerkotla", "Barnala", "Rajpura", "Fazilka", "Phagwara", "Gurdaspur", "Sangrur", "Kapurthala", "Faridkot", "Muktsar", "Nawanshahr", "Tarn Taran", "Jagraon"] },
-  { state: "Rajasthan", cities: ["Jaipur", "Jodhpur", "Kota", "Bikaner", "Ajmer", "Udaipur", "Bhilwara", "Alwar", "Sikar", "Pali", "Sri Ganganagar", "Bharatpur", "Jhunjhunu", "Beawar", "Kishangarh", "Hanumangarh", "Banswara", "Churu", "Nagaur", "Tonk", "Sawai Madhopur", "Hindaun", "Sujangarh", "Baran", "Makrana", "Sardarshahar"] },
-  { state: "Sikkim", cities: ["Gangtok", "Namchi", "Mangan", "Gyalshing", "Nayabazar", "Singtam", "Jorethang", "Rangpo", "Melli", "Ravangla", "Chungthang", "Yuksom", "Soreng", "Rongli", "Majhitar", "Dentam", "Daramdin", "Lachen", "Lachung", "Rinchenpong", "Kaluk", "Kabi", "Dzongu", "Rhenock", "Pakyong"] },
-  { state: "Tamil Nadu", cities: ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem", "Tirunelveli", "Tiruppur", "Vellore", "Erode", "Thoothukkudi", "Dindigul", "Thanjavur", "Ranipet", "Sivakasi", "Karur", "Udhagamandalam", "Hosur", "Nagercoil", "Kancheepuram", "Kumarapalayam", "Karaikkudi", "Neyveli", "Cuddalore", "Kumbakonam", "Tiruvannamalai", "Pollachi"] },
-  { state: "Telangana", cities: ["Hyderabad", "Warangal", "Nizamabad", "Khammam", "Karimnagar", "Ramagundam", "Mahbubnagar", "Nalgonda", "Adilabad", "Siddipet", "Suryapet", "Miryalaguda", "Jagtial", "Mancherial", "Bhongir", "Vikarabad", "Jangaon", "Bodhan", "Sangareddy", "Medak", "Narayanpet", "Wanaparthy", "Kothagudem", "Gadwal", "Tandur", "Nirmal"] },
-  { state: "Tripura", cities: ["Agartala", "Udaipur", "Dharmanagar", "Kailasahar", "Belonia", "Khowai", "Teliamura", "Sonamura", "Sabroom", "Amarpur", "Ambassa", "Kamalpur", "Bishalgarh", "Mohanpur", "Melaghar", "Santir Bazar", "Kumarghat", "Panisagar", "Jampuijala", "Boxanagar", "Pratapgarh", "Kathalia", "Amarpur", "Rajnagar", "Kakraban"] },
-  { state: "Uttar Pradesh", cities: ["Lucknow", "Kanpur", "Ghaziabad", "Agra", "Meerut", "Varanasi", "Prayagraj", "Bareilly", "Aligarh", "Moradabad", "Saharanpur", "Gorakhpur", "Noida", "Firozabad", "Loni", "Jhansi", "Muzaffarnagar", "Mathura", "Shahjahanpur", "Rampur", "Ayodhya", "Vrindavan", "Bulandshahr", "Amroha", "Hardoi", "Fatehpur"] },
-  { state: "Uttarakhand", cities: ["Dehradun", "Haridwar", "Rishikesh", "Roorkee", "Kashipur", "Haldwani", "Rudrapur", "Jaspur", "Pithoragarh", "Ramnagar", "Kichha", "Kotdwara", "Manglaur", "Sitarganj", "Bageshwar", "Pauri", "Tehri", "Khatima", "Almora", "Srinagar", "Chamoli", "Mussoorie", "Nainital", "Champawat", "Uttarkashi", "Vikasnagar"] },
-  { state: "West Bengal", cities: ["Kolkata", "Asansol", "Siliguri", "Durgapur", "Bardhaman", "Malda", "Baharampur", "Habra", "Jalpaiguri", "Kharagpur", "Barasat", "Kalyani", "Balurghat", "Bidhan Nagar", "Haldia", "Bankura", "Purulia", "Krishnanagar", "Nabadwip", "Medinipur", "Cooch Behar", "Darjeeling", "Howrah", "Alipurduar", "Ranaghat", "Bolpur"] },
-  { state: "Andaman and Nicobar Islands", cities: ["Port Blair", "Havelock Island", "Neil Island", "Car Nicobar", "Diglipur", "Mayabunder", "Rangat", "Little Andaman", "Campbell Bay", "Wimberlygunj", "Bamboo Flat", "Garacharma", "Ferrargunj", "Kadamtala", "Billiground", "Hut Bay", "Kamorta", "Nancowry", "Teressa", "Katchal", "Chouldari", "Prothrapur", "Jungli Ghat", "Sippighat", "Austinabad"] },
-  { state: "Chandigarh", cities: ["Chandigarh", "Mani Majra", "Bahlana", "Dhanas", "Daria", "Kishangarh", "Maloya", "Mauli Jagran", "Palsora", "Hallomajra", "Dadu Majra", "Behlana", "Makhan Majra", "Kaimbwala", "Khuda Ali Sher", "Khuda Jassu", "Khuda Lahora", "Sarangpur", "Burail", "Attawa", "Badheri", "Buterla", "Kajheri", "Ram Darbar", "Maloya"] },
-  { state: "Dadra and Nagar Haveli and Daman and Diu", cities: ["Daman", "Diu", "Silvassa", "Dadra", "Naroli", "Khanvel", "Amli", "Vapi", "Kachigam", "Dunetha", "Dabhel", "Bhimpore", "Nani Daman", "Moti Daman", "Ghoghla", "Fudam", "Vanakbara", "Bucharwada", "Kadaiya", "Kunta", "Rakholi", "Samarvarni", "Surangi", "Velugam", "Dadra"] },
-  { state: "Delhi", cities: ["New Delhi", "North Delhi", "South Delhi", "East Delhi", "West Delhi", "Central Delhi", "Shahdara", "North East Delhi", "North West Delhi", "South East Delhi", "South West Delhi", "Old Delhi", "Connaught Place", "Karol Bagh", "Hauz Khas", "Saket", "Dwarka", "Rohini", "Pitampura", "Janakpuri", "Laxmi Nagar", "Mayur Vihar", "Punjabi Bagh", "Rajouri Garden", "Vasant Kunj", "Greater Kailash"] },
-  { state: "Jammu and Kashmir", cities: ["Srinagar", "Jammu", "Anantnag", "Baramulla", "Kathua", "Sopore", "Udhampur", "Poonch", "Pulwama", "Kupwara", "Ganderbal", "Budgam", "Bandipora", "Shopian", "Kulgam", "Reasi", "Doda", "Ramban", "Kishtwar", "Handwara", "Tral", "Awantipora", "Pahalgam", "Qazigund", "Uri", "Banihal"] },
-  { state: "Ladakh", cities: ["Leh", "Kargil", "Nubra", "Zanskar", "Drass", "Khalsi", "Diskit", "Hanle", "Padum", "Khaltse", "Sankoo", "Nyoma", "Turtuk", "Skurbuchan", "Saspol", "Chuchot", "Achinathang", "Choglamsar", "Sumda", "Temisgam", "Lamayuru", "Wakha", "Hemis", "Thiksey", "Shey"] },
-  { state: "Lakshadweep", cities: ["Kavaratti", "Agatti", "Amini", "Andrott", "Bangaram", "Bitra", "Chetlat", "Kadmat", "Kalpeni", "Kiltan", "Minicoy", "Suheli"] },
-  { state: "Puducherry", cities: ["Puducherry", "Karaikal", "Mahe", "Yanam", "Ozhukarai", "Villianur", "Ariyankuppam", "Madagadipet", "Nettapakkam", "Thirubhuvanai", "Bahour", "Kottucherry", "Nedungadu", "Thirunallar", "Neravy", "Tirumalarajanpattinam", "Palloor", "Chalakara", "Dariyalatippa", "Kurumbapet", "Thattanchavady", "Muthialpet", "Kalapet", "Kirumampakkam", "Lawspet"] }
+// List of major Indian cities with their state
+const indianCities = [
+  { name: "Mumbai", state: "Maharashtra", city_id: "BOM", is_popular: true },
+  { name: "Delhi", state: "Delhi", city_id: "DEL", is_popular: true },
+  { name: "Bangalore", state: "Karnataka", city_id: "BLR", is_popular: true },
+  { name: "Hyderabad", state: "Telangana", city_id: "HYD", is_popular: true },
+  { name: "Chennai", state: "Tamil Nadu", city_id: "MAA", is_popular: true },
+  { name: "Kolkata", state: "West Bengal", city_id: "CCU", is_popular: true },
+  { name: "Ahmedabad", state: "Gujarat", city_id: "AMD", is_popular: true },
+  { name: "Pune", state: "Maharashtra", city_id: "PNQ", is_popular: true },
+  { name: "Jaipur", state: "Rajasthan", city_id: "JAI", is_popular: true },
+  { name: "Surat", state: "Gujarat", city_id: "STV", is_popular: true },
+  { name: "Lucknow", state: "Uttar Pradesh", city_id: "LKO", is_popular: true },
+  { name: "Kanpur", state: "Uttar Pradesh", city_id: "KNU", is_popular: true },
+  { name: "Nagpur", state: "Maharashtra", city_id: "NAG", is_popular: true },
+  { name: "Indore", state: "Madhya Pradesh", city_id: "IDR", is_popular: true },
+  { name: "Thane", state: "Maharashtra", city_id: "THN", is_popular: false },
+  { name: "Bhopal", state: "Madhya Pradesh", city_id: "BHO", is_popular: false },
+  { name: "Visakhapatnam", state: "Andhra Pradesh", city_id: "VTZ", is_popular: false },
+  { name: "Patna", state: "Bihar", city_id: "PAT", is_popular: false },
+  { name: "Vadodara", state: "Gujarat", city_id: "BDQ", is_popular: false },
+  { name: "Ghaziabad", state: "Uttar Pradesh", city_id: "GBD", is_popular: false },
+  { name: "Mysore", state: "Karnataka", city_id: "MYQ", is_popular: false },
+  { name: "Coimbatore", state: "Tamil Nadu", city_id: "CJB", is_popular: false },
+  { name: "Kochi", state: "Kerala", city_id: "COK", is_popular: false },
+  { name: "Trivandrum", state: "Kerala", city_id: "TRV", is_popular: false },
+  { name: "Madurai", state: "Tamil Nadu", city_id: "IXM", is_popular: false },
+  { name: "Varanasi", state: "Uttar Pradesh", city_id: "VNS", is_popular: false },
+  { name: "Amritsar", state: "Punjab", city_id: "ATQ", is_popular: false },
+  { name: "Jodhpur", state: "Rajasthan", city_id: "JDH", is_popular: false },
+  { name: "Guwahati", state: "Assam", city_id: "GAU", is_popular: false },
+  { name: "Chandigarh", state: "Chandigarh", city_id: "IXC", is_popular: false },
+  { name: "Ludhiana", state: "Punjab", city_id: "LUH", is_popular: false },
+  { name: "Agra", state: "Uttar Pradesh", city_id: "AGR", is_popular: false },
+  { name: "Nashik", state: "Maharashtra", city_id: "ISK", is_popular: false },
+  { name: "Faridabad", state: "Haryana", city_id: "FBD", is_popular: false },
+  { name: "Meerut", state: "Uttar Pradesh", city_id: "MEL", is_popular: false },
+  { name: "Rajkot", state: "Gujarat", city_id: "RAJ", is_popular: false },
+  { name: "Kalyan", state: "Maharashtra", city_id: "KLY", is_popular: false },
+  { name: "Ranchi", state: "Jharkhand", city_id: "IXR", is_popular: false },
+  { name: "Haora", state: "West Bengal", city_id: "HWH", is_popular: false },
+  { name: "Vijaywada", state: "Andhra Pradesh", city_id: "VGA", is_popular: false },
+  { name: "Goa", state: "Goa", city_id: "GOI", is_popular: true },
+  { name: "Shimla", state: "Himachal Pradesh", city_id: "SLV", is_popular: false },
+  { name: "Dehradun", state: "Uttarakhand", city_id: "DED", is_popular: false },
+  { name: "Nainital", state: "Uttarakhand", city_id: "NTL", is_popular: false },
+  { name: "Manali", state: "Himachal Pradesh", city_id: "MNL", is_popular: false },
+  { name: "Udaipur", state: "Rajasthan", city_id: "UDR", is_popular: false },
+  { name: "Jaisalmer", state: "Rajasthan", city_id: "JSA", is_popular: false },
+  { name: "Darjeeling", state: "West Bengal", city_id: "DAR", is_popular: false },
+  { name: "Munnar", state: "Kerala", city_id: "MUN", is_popular: false },
+  { name: "Ooty", state: "Tamil Nadu", city_id: "OOT", is_popular: false },
+];
+
+// Common routes between major cities
+const popularRoutes = [
+  { from_city_id: "BOM", to_city_id: "DEL", from_city_name: "Mumbai", to_city_name: "Delhi", route_id: "BOM-DEL", is_popular: true },
+  { from_city_id: "BOM", to_city_id: "BLR", from_city_name: "Mumbai", to_city_name: "Bangalore", route_id: "BOM-BLR", is_popular: true },
+  { from_city_id: "BOM", to_city_id: "GOI", from_city_name: "Mumbai", to_city_name: "Goa", route_id: "BOM-GOI", is_popular: true },
+  { from_city_id: "BOM", to_city_id: "PNQ", from_city_name: "Mumbai", to_city_name: "Pune", route_id: "BOM-PNQ", is_popular: true },
+  { from_city_id: "DEL", to_city_id: "BOM", from_city_name: "Delhi", to_city_name: "Mumbai", route_id: "DEL-BOM", is_popular: true },
+  { from_city_id: "DEL", to_city_id: "JAI", from_city_name: "Delhi", to_city_name: "Jaipur", route_id: "DEL-JAI", is_popular: true },
+  { from_city_id: "DEL", to_city_id: "LKO", from_city_name: "Delhi", to_city_name: "Lucknow", route_id: "DEL-LKO", is_popular: true },
+  { from_city_id: "BLR", to_city_id: "HYD", from_city_name: "Bangalore", to_city_name: "Hyderabad", route_id: "BLR-HYD", is_popular: true },
+  { from_city_id: "BLR", to_city_id: "MAA", from_city_name: "Bangalore", to_city_name: "Chennai", route_id: "BLR-MAA", is_popular: true },
+  { from_city_id: "BLR", to_city_id: "GOI", from_city_name: "Bangalore", to_city_name: "Goa", route_id: "BLR-GOI", is_popular: true },
+  { from_city_id: "HYD", to_city_id: "BLR", from_city_name: "Hyderabad", to_city_name: "Bangalore", route_id: "HYD-BLR", is_popular: true },
+  { from_city_id: "HYD", to_city_id: "MAA", from_city_name: "Hyderabad", to_city_name: "Chennai", route_id: "HYD-MAA", is_popular: true },
+  { from_city_id: "MAA", to_city_id: "BLR", from_city_name: "Chennai", to_city_name: "Bangalore", route_id: "MAA-BLR", is_popular: true },
+  { from_city_id: "MAA", to_city_id: "HYD", from_city_name: "Chennai", to_city_name: "Hyderabad", route_id: "MAA-HYD", is_popular: true },
 ];
 
 serve(async (req) => {
@@ -69,139 +99,66 @@ serve(async (req) => {
   }
 
   try {
-    console.log("Starting city synchronization");
+    console.log("Starting city and route synchronization");
     
-    // First, try to fetch cities from third-party API
-    console.log("Attempting to fetch cities from third-party API");
-    let cities = [];
-    try {
-      const { data: thirdPartyCities, error: thirdPartyError } = await thirdPartyClient
-        .from("cities")
-        .select("*");
+    // Check if we have cities already in the database
+    const { data: existingCities, error: citiesCheckError } = await supabaseClient
+      .from("cities")
+      .select("city_id")
+      .limit(1);
+    
+    if (citiesCheckError) {
+      console.error("Error checking for existing cities:", citiesCheckError.message);
+    } else if (!existingCities || existingCities.length === 0) {
+      console.log("No cities found in database, inserting Indian cities");
+      
+      // Insert cities in batches to avoid potential payload size limitations
+      const batchSize = 20;
+      for (let i = 0; i < indianCities.length; i += batchSize) {
+        const batch = indianCities.slice(i, i + batchSize);
         
-      if (thirdPartyError) {
-        console.warn(`Warning: Failed to fetch cities from third-party API: ${thirdPartyError.message}`);
-        console.log("Will use internal Indian locations list instead");
-      } else if (thirdPartyCities && thirdPartyCities.length > 0) {
-        console.log(`Successfully fetched ${thirdPartyCities.length} cities from third-party API`);
-        cities = thirdPartyCities.map(city => ({
-          city_id: city.city_id || city.id || `CITY${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
-          name: city.name,
-          state: city.state,
-          country: "India",
-          is_popular: city.is_popular || false
-        }));
-      }
-    } catch (error) {
-      console.warn(`Warning: Error fetching cities from third-party API: ${error.message}`);
-      console.log("Will use internal Indian locations list instead");
-    }
-    
-    // If third-party API didn't return cities, use the comprehensive list
-    if (cities.length === 0) {
-      console.log("Using internal list of Indian locations");
-      
-      // Create a flattened list of cities from our extensive Indian locations data
-      indianLocations.forEach(state => {
-        state.cities.forEach(cityName => {
-          const cityId = `${cityName.substring(0, 3).toUpperCase()}${Math.floor(Math.random() * 1000)}`;
-          cities.push({
-            city_id: cityId,
-            name: cityName,
-            state: state.state,
-            country: "India",
-            is_popular: ["Mumbai", "Delhi", "Bangalore", "Hyderabad", "Chennai", "Kolkata", "Pune", "Ahmedabad", "Jaipur", "Lucknow", "Goa"].includes(cityName)
-          });
-        });
-      });
-      
-      console.log(`Processed ${cities.length} cities from internal list`);
-    }
-    
-    // Process cities in batches to avoid rate limits
-    const batchSize = 50;
-    let totalInserted = 0;
-    
-    // First, clear all existing cities to remove mock data
-    console.log("Clearing existing cities data");
-    const { error: deleteError } = await supabaseClient.from("cities").delete().gte('id', 0);
-    
-    if (deleteError) {
-      console.warn(`Warning when clearing cities: ${deleteError.message}`);
-    }
-    
-    console.log("Inserting cities in batches");
-    for (let i = 0; i < cities.length; i += batchSize) {
-      const batch = cities.slice(i, i + batchSize);
-      
-      const { data, error } = await supabaseClient.from("cities").upsert(
-        batch,
-        { onConflict: "city_id" }
-      );
-      
-      if (error) {
-        console.error(`Error inserting batch ${i / batchSize + 1}: ${error.message}`);
-        throw error;
-      }
-      
-      totalInserted += batch.length;
-      console.log(`Processed ${totalInserted} cities so far`);
-    }
-    
-    // Now create popular routes between these cities
-    const popularCities = cities.filter(city => city.is_popular);
-    console.log(`Found ${popularCities.length} popular cities`);
-    
-    const popularRoutes = [];
-    let routeId = 1;
-    
-    // Create routes between popular cities
-    for (let i = 0; i < popularCities.length; i++) {
-      for (let j = 0; j < popularCities.length; j++) {
-        if (i !== j) {
-          popularRoutes.push({
-            route_id: `R${routeId.toString().padStart(4, '0')}`,
-            from_city_id: popularCities[i].city_id,
-            to_city_id: popularCities[j].city_id,
-            from_city_name: popularCities[i].name,
-            to_city_name: popularCities[j].name,
-            is_popular: true
-          });
-          routeId++;
+        const { error: citiesInsertError } = await supabaseClient
+          .from("cities")
+          .upsert(batch, { onConflict: "city_id" });
+        
+        if (citiesInsertError) {
+          console.error(`Error inserting cities batch ${i/batchSize + 1}: ${citiesInsertError.message}`);
+        } else {
+          console.log(`Successfully inserted cities batch ${i/batchSize + 1}`);
         }
       }
+    } else {
+      console.log("Cities already exist in database, skipping city insertion");
     }
     
-    // First, clear existing routes
-    console.log("Clearing existing routes data");
-    const { error: deleteRoutesError } = await supabaseClient.from("routes").delete().gte('id', 0);
+    // Check if we have routes already in the database
+    const { data: existingRoutes, error: routesCheckError } = await supabaseClient
+      .from("routes")
+      .select("route_id")
+      .limit(1);
     
-    if (deleteRoutesError) {
-      console.warn(`Warning when clearing routes: ${deleteRoutesError.message}`);
-    }
-    
-    // Insert routes
-    console.log(`Inserting ${popularRoutes.length} routes`);
-    if (popularRoutes.length > 0) {
-      for (let i = 0; i < popularRoutes.length; i += batchSize) {
-        const batch = popularRoutes.slice(i, i + batchSize);
-        
-        const { data, error } = await supabaseClient.from("routes").upsert(
-          batch,
-          { onConflict: "route_id" }
-        );
-        
-        if (error) {
-          console.error(`Error inserting routes batch ${i / batchSize + 1}: ${error.message}`);
-        }
+    if (routesCheckError) {
+      console.error("Error checking for existing routes:", routesCheckError.message);
+    } else if (!existingRoutes || existingRoutes.length === 0) {
+      console.log("No routes found in database, inserting popular routes");
+      
+      const { error: routesInsertError } = await supabaseClient
+        .from("routes")
+        .upsert(popularRoutes, { onConflict: "route_id" });
+      
+      if (routesInsertError) {
+        console.error(`Error inserting routes: ${routesInsertError.message}`);
+      } else {
+        console.log("Successfully inserted popular routes");
       }
-      console.log(`Processed ${popularRoutes.length} routes`);
+    } else {
+      console.log("Routes already exist in database, skipping route insertion");
     }
     
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `Synchronized ${totalInserted} cities and ${popularRoutes.length} routes` 
+        message: `Synchronized ${indianCities.length} cities and ${popularRoutes.length} routes` 
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
