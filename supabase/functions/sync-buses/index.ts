@@ -323,5 +323,3 @@ serve(async (req) => {
     );
   }
 });
-
-// Helper functions were removed as they're only used for mock data generation
