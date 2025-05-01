@@ -174,6 +174,29 @@ export const BoardingPointService = {
     
     console.log(`Found ${data?.length || 0} boarding points for bus ${busId}`);
     return data || [];
+  },
+  
+  // Method to subscribe to realtime boarding point updates
+  subscribeToRealtimeBoardingPointUpdates(busId: string, callback: (payload: any) => void) {
+    console.log(`Setting up realtime subscription for bus ${busId} boarding points`);
+    const channel = supabase.channel('public:boarding_points')
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'boarding_points',
+        filter: `bus_id=eq.${busId}` 
+      }, payload => {
+        console.log('Received boarding point update:', payload);
+        callback(payload);
+      })
+      .subscribe((status) => {
+        console.log('Boarding point realtime subscription status:', status);
+      });
+
+    return () => {
+      console.log(`Removing realtime subscription for bus ${busId} boarding points`);
+      supabase.removeChannel(channel);
+    };
   }
 };
 
@@ -194,6 +217,29 @@ export const DroppingPointService = {
     
     console.log(`Found ${data?.length || 0} dropping points for bus ${busId}`);
     return data || [];
+  },
+  
+  // Method to subscribe to realtime dropping point updates
+  subscribeToRealtimeDroppingPointUpdates(busId: string, callback: (payload: any) => void) {
+    console.log(`Setting up realtime subscription for bus ${busId} dropping points`);
+    const channel = supabase.channel('public:dropping_points')
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'dropping_points',
+        filter: `bus_id=eq.${busId}` 
+      }, payload => {
+        console.log('Received dropping point update:', payload);
+        callback(payload);
+      })
+      .subscribe((status) => {
+        console.log('Dropping point realtime subscription status:', status);
+      });
+
+    return () => {
+      console.log(`Removing realtime subscription for bus ${busId} dropping points`);
+      supabase.removeChannel(channel);
+    };
   }
 };
 

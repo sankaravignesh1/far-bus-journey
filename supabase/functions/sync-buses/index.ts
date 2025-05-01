@@ -20,15 +20,60 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Helper function to convert ISO datetime to time string
+// Helper function to properly format time
 function formatTimeFromISO(isoString) {
   try {
     if (!isoString) return null;
+    
+    // Check if it's already in HH:MM:SS format
+    if (/^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/.test(isoString)) {
+      return isoString;
+    }
+    
+    // Try to parse as ISO date
     const date = new Date(isoString);
-    return date.toTimeString().split(' ')[0]; // Returns HH:MM:SS format
+    if (isNaN(date.getTime())) {
+      console.warn(`Invalid date format: ${isoString}, using default time`);
+      return "12:00:00"; // Default time as fallback
+    }
+    
+    // Format as HH:MM:SS
+    return date.toTimeString().substring(0, 8);
   } catch (error) {
     console.error(`Error formatting time from ${isoString}: ${error.message}`);
-    return null;
+    return "12:00:00"; // Default time as fallback
+  }
+}
+
+// Helper function to ensure valid time format
+function ensureValidTimeFormat(timeString) {
+  if (!timeString) return "12:00:00";
+  
+  // Check if already a valid time string
+  if (/^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/.test(timeString)) {
+    return timeString;
+  }
+  
+  try {
+    // Try to extract time part from date string
+    if (timeString.includes('T')) {
+      const timePart = timeString.split('T')[1].split('.')[0].substring(0, 8);
+      if (/^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/.test(timePart)) {
+        return timePart;
+      }
+    }
+    
+    // Try to parse as a date
+    const date = new Date(timeString);
+    if (!isNaN(date.getTime())) {
+      return date.toTimeString().substring(0, 8);
+    }
+    
+    console.warn(`Could not parse time: ${timeString}, using default`);
+    return "12:00:00";
+  } catch (error) {
+    console.error(`Error parsing time ${timeString}: ${error.message}`);
+    return "12:00:00";
   }
 }
 
@@ -130,8 +175,8 @@ serve(async (req) => {
             from_city: bus.from_city || routes[0]?.from_city_name || "Mumbai",
             to_city: bus.to_city || routes[0]?.to_city_name || "Delhi",
             journey_date: bus.journey_date || dates[0],
-            departure_time: formatTimeFromISO(bus.departure_time) || "08:00:00",
-            arrival_time: formatTimeFromISO(bus.arrival_time) || "16:00:00",
+            departure_time: ensureValidTimeFormat(bus.departure_time) || "08:00:00",
+            arrival_time: ensureValidTimeFormat(bus.arrival_time) || "16:00:00",
             duration: bus.duration || "8h 0m",
             available_seats: bus.available_seats || 30,
             singleseats_available: bus.singleseats_available || 10,
@@ -171,6 +216,12 @@ serve(async (req) => {
               
               // Insert layouts
               for (const seat of thirdPartyLayout) {
+                // Fix for deck value
+                let deckValue = "lower";
+                if (seat.deck && typeof seat.deck === 'string') {
+                  deckValue = seat.deck.toLowerCase() === 'upper' ? 'upper' : 'lower';
+                }
+                
                 const formattedSeat = {
                   seat_id: seat.seat_id || `SEAT-${formattedBus.bus_id}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
                   operator_id: formattedBus.operator_id,
@@ -182,14 +233,14 @@ serve(async (req) => {
                   op_route_id: formattedBus.op_route_id,
                   seat_name: seat.seat_name || `Seat-${Math.floor(Math.random() * 40) + 1}`,
                   seat_type: seat.seat_type || formattedBus.bus_category,
-                  deck: seat.deck || 'lower',
+                  deck: deckValue,
                   available: seat.available !== undefined ? seat.available : true,
                   original_price: seat.original_price || formattedBus.starting_fare,
                   discounted_price: seat.discounted_price,
                   is_ladies_seat: seat.is_ladies_seat || false,
                   x_pos: seat.x_pos || Math.floor(Math.random() * 10),
                   y_pos: seat.y_pos || Math.floor(Math.random() * 4),
-                  z_pos: seat.z_pos || (seat.deck === 'upper' ? 1 : 0),
+                  z_pos: seat.z_pos || (deckValue === 'upper' ? 1 : 0),
                   width: seat.width || 1,
                   height: seat.height || 1,
                   is_double_berth: seat.is_double_berth || false,
@@ -263,7 +314,7 @@ serve(async (req) => {
             console.warn(`Error processing layout for bus ${bus.bus_id}: ${error.message}`);
           }
           
-          // Get boarding points
+          // Get boarding points from third-party API
           try {
             const { data: thirdPartyBoarding, error: boardingError } = await thirdPartyClient
               .from("boarding_points")
@@ -277,6 +328,9 @@ serve(async (req) => {
               
               // Insert boarding points
               for (const bp of thirdPartyBoarding) {
+                // Ensure valid time format
+                const validTime = ensureValidTimeFormat(bp.b_time);
+                
                 const formattedBp = {
                   bp_id: bp.bp_id || crypto.randomUUID(),
                   bus_id: formattedBus.bus_id,
@@ -287,7 +341,7 @@ serve(async (req) => {
                   op_route_id: formattedBus.op_route_id,
                   op_bp_id: bp.op_bp_id || bp.bp_id,
                   b_point_name: bp.b_point_name || `${formattedBus.from_city} Stop ${Math.floor(Math.random() * 5) + 1}`,
-                  b_time: formatTimeFromISO(bp.b_time) || formattedBus.departure_time,
+                  b_time: validTime,
                   b_address: bp.b_address || `${formattedBus.from_city} Bus Terminal`,
                   b_contact: bp.b_contact || `+91${Math.floor(Math.random() * 9000000000) + 1000000000}`,
                   b_landmark: bp.b_landmark || `Near ${formattedBus.from_city} Railway Station`
@@ -337,7 +391,7 @@ serve(async (req) => {
             console.warn(`Error processing boarding points for bus ${bus.bus_id}: ${error.message}`);
           }
           
-          // Get dropping points
+          // Get dropping points from third-party API
           try {
             const { data: thirdPartyDropping, error: droppingError } = await thirdPartyClient
               .from("dropping_points")
@@ -351,6 +405,9 @@ serve(async (req) => {
               
               // Insert dropping points
               for (const dp of thirdPartyDropping) {
+                // Ensure valid time format
+                const validTime = ensureValidTimeFormat(dp.d_time);
+                
                 const formattedDp = {
                   dp_id: dp.dp_id || crypto.randomUUID(),
                   bus_id: formattedBus.bus_id,
@@ -361,7 +418,7 @@ serve(async (req) => {
                   op_route_id: formattedBus.op_route_id,
                   op_dp_id: dp.op_dp_id || dp.dp_id,
                   d_point_name: dp.d_point_name || `${formattedBus.to_city} Stop ${Math.floor(Math.random() * 5) + 1}`,
-                  d_time: formatTimeFromISO(dp.d_time) || formattedBus.arrival_time,
+                  d_time: validTime,
                   d_address: dp.d_address || `${formattedBus.to_city} Bus Terminal`,
                   d_contact: dp.d_contact || `+91${Math.floor(Math.random() * 9000000000) + 1000000000}`,
                   d_landmark: dp.d_landmark || `Near ${formattedBus.to_city} Railway Station`
@@ -503,58 +560,96 @@ serve(async (req) => {
             }
           }
           
-          // Generate boarding point
-          const boardingPoint = {
-            bp_id: crypto.randomUUID(),
-            bus_id: defaultBus.bus_id,
-            route_id: defaultBus.route_id,
-            operator_id: defaultBus.operator_id,
-            operator_name: defaultBus.operator_name,
-            op_bus_id: defaultBus.op_bus_id,
-            op_route_id: defaultBus.op_route_id,
-            op_bp_id: `BP-${defaultBus.bus_id}-1`,
-            b_point_name: `${defaultBus.from_city} Main Terminal`,
-            b_time: defaultBus.departure_time,
-            b_address: `${defaultBus.from_city} Bus Terminal, Main Road`,
-            b_contact: `+91${Math.floor(Math.random() * 9000000000) + 1000000000}`,
-            b_landmark: `Near ${defaultBus.from_city} Railway Station`
-          };
-          
-          const { error: bpInsertError } = await supabaseClient
-            .from("boarding_points")
-            .upsert(boardingPoint, { onConflict: "bp_id" });
+          // Generate boarding points (create 3 for variation)
+          for (let b = 1; b <= 3; b++) {
+            const hourOffset = (b - 1) * 0.5;
+            const departureHour = parseInt(defaultBus.departure_time.split(':')[0]);
+            const departureMinute = parseInt(defaultBus.departure_time.split(':')[1]);
             
-          if (bpInsertError) {
-            console.error(`Error inserting default boarding point ${boardingPoint.bp_id}: ${bpInsertError.message}`);
-          } else {
-            boardingPoints++;
+            let boardingHour = departureHour - Math.floor(hourOffset);
+            let boardingMinute = departureMinute - Math.floor((hourOffset % 1) * 60);
+            
+            if (boardingMinute < 0) {
+              boardingMinute += 60;
+              boardingHour--;
+            }
+            if (boardingHour < 0) {
+              boardingHour += 24;
+            }
+            
+            const boardingTime = `${boardingHour.toString().padStart(2, '0')}:${boardingMinute.toString().padStart(2, '0')}:00`;
+            
+            const boardingPoint = {
+              bp_id: crypto.randomUUID(),
+              bus_id: defaultBus.bus_id,
+              route_id: defaultBus.route_id,
+              operator_id: defaultBus.operator_id,
+              operator_name: defaultBus.operator_name,
+              op_bus_id: defaultBus.op_bus_id,
+              op_route_id: defaultBus.op_route_id,
+              op_bp_id: `BP-${defaultBus.bus_id}-${b}`,
+              b_point_name: `${defaultBus.from_city} ${b === 1 ? 'Main Terminal' : 'Stop ' + b}`,
+              b_time: boardingTime,
+              b_address: `${defaultBus.from_city} ${b === 1 ? 'Bus Terminal' : 'Area ' + b}, Main Road`,
+              b_contact: `+91${Math.floor(Math.random() * 9000000000) + 1000000000}`,
+              b_landmark: `Near ${defaultBus.from_city} ${b === 1 ? 'Railway Station' : 'Landmark ' + b}`
+            };
+            
+            const { error: bpInsertError } = await supabaseClient
+              .from("boarding_points")
+              .upsert(boardingPoint, { onConflict: "bp_id" });
+              
+            if (bpInsertError) {
+              console.error(`Error inserting default boarding point ${boardingPoint.bp_id}: ${bpInsertError.message}`);
+            } else {
+              boardingPoints++;
+            }
           }
           
-          // Generate dropping point
-          const droppingPoint = {
-            dp_id: crypto.randomUUID(),
-            bus_id: defaultBus.bus_id,
-            route_id: defaultBus.route_id,
-            operator_id: defaultBus.operator_id,
-            operator_name: defaultBus.operator_name,
-            op_bus_id: defaultBus.op_bus_id,
-            op_route_id: defaultBus.op_route_id,
-            op_dp_id: `DP-${defaultBus.bus_id}-1`,
-            d_point_name: `${defaultBus.to_city} Main Terminal`,
-            d_time: defaultBus.arrival_time,
-            d_address: `${defaultBus.to_city} Bus Terminal, Main Road`,
-            d_contact: `+91${Math.floor(Math.random() * 9000000000) + 1000000000}`,
-            d_landmark: `Near ${defaultBus.to_city} Railway Station`
-          };
-          
-          const { error: dpInsertError } = await supabaseClient
-            .from("dropping_points")
-            .upsert(droppingPoint, { onConflict: "dp_id" });
+          // Generate dropping points (create 3 for variation)
+          for (let d = 1; d <= 3; d++) {
+            const hourOffset = (d - 1) * 0.5;
+            const arrivalHour = parseInt(defaultBus.arrival_time.split(':')[0]);
+            const arrivalMinute = parseInt(defaultBus.arrival_time.split(':')[1]);
             
-          if (dpInsertError) {
-            console.error(`Error inserting default dropping point ${droppingPoint.dp_id}: ${dpInsertError.message}`);
-          } else {
-            droppingPoints++;
+            let droppingHour = arrivalHour + Math.floor(hourOffset);
+            let droppingMinute = arrivalMinute + Math.floor((hourOffset % 1) * 60);
+            
+            if (droppingMinute >= 60) {
+              droppingMinute -= 60;
+              droppingHour++;
+            }
+            if (droppingHour >= 24) {
+              droppingHour -= 24;
+            }
+            
+            const droppingTime = `${droppingHour.toString().padStart(2, '0')}:${droppingMinute.toString().padStart(2, '0')}:00`;
+            
+            const droppingPoint = {
+              dp_id: crypto.randomUUID(),
+              bus_id: defaultBus.bus_id,
+              route_id: defaultBus.route_id,
+              operator_id: defaultBus.operator_id,
+              operator_name: defaultBus.operator_name,
+              op_bus_id: defaultBus.op_bus_id,
+              op_route_id: defaultBus.op_route_id,
+              op_dp_id: `DP-${defaultBus.bus_id}-${d}`,
+              d_point_name: `${defaultBus.to_city} ${d === 1 ? 'Main Terminal' : 'Stop ' + d}`,
+              d_time: droppingTime,
+              d_address: `${defaultBus.to_city} ${d === 1 ? 'Bus Terminal' : 'Area ' + d}, Main Road`,
+              d_contact: `+91${Math.floor(Math.random() * 9000000000) + 1000000000}`,
+              d_landmark: `Near ${defaultBus.to_city} ${d === 1 ? 'Railway Station' : 'Landmark ' + d}`
+            };
+            
+            const { error: dpInsertError } = await supabaseClient
+              .from("dropping_points")
+              .upsert(droppingPoint, { onConflict: "dp_id" });
+              
+            if (dpInsertError) {
+              console.error(`Error inserting default dropping point ${droppingPoint.dp_id}: ${dpInsertError.message}`);
+            } else {
+              droppingPoints++;
+            }
           }
         }
       }
@@ -651,58 +746,96 @@ serve(async (req) => {
           }
         }
         
-        // Generate boarding point
-        const boardingPoint = {
-          bp_id: crypto.randomUUID(),
-          bus_id: defaultBus.bus_id,
-          route_id: defaultBus.route_id,
-          operator_id: defaultBus.operator_id,
-          operator_name: defaultBus.operator_name,
-          op_bus_id: defaultBus.op_bus_id,
-          op_route_id: defaultBus.op_route_id,
-          op_bp_id: `BP-${defaultBus.bus_id}-1`,
-          b_point_name: `${defaultBus.from_city} Main Terminal`,
-          b_time: defaultBus.departure_time,
-          b_address: `${defaultBus.from_city} Bus Terminal, Main Road`,
-          b_contact: `+91${Math.floor(Math.random() * 9000000000) + 1000000000}`,
-          b_landmark: `Near ${defaultBus.from_city} Railway Station`
-        };
-        
-        const { error: bpInsertError } = await supabaseClient
-          .from("boarding_points")
-          .upsert(boardingPoint, { onConflict: "bp_id" });
+        // Generate multiple boarding points for each bus (3 points)
+        for (let b = 1; b <= 3; b++) {
+          const hourOffset = (b - 1) * 0.5;
+          const departureHour = parseInt(defaultBus.departure_time.split(':')[0]);
+          const departureMinute = parseInt(defaultBus.departure_time.split(':')[1]);
           
-        if (bpInsertError) {
-          console.error(`Error inserting default boarding point ${boardingPoint.bp_id}: ${bpInsertError.message}`);
-        } else {
-          boardingPoints++;
+          let boardingHour = departureHour - Math.floor(hourOffset);
+          let boardingMinute = departureMinute - Math.floor((hourOffset % 1) * 60);
+          
+          if (boardingMinute < 0) {
+            boardingMinute += 60;
+            boardingHour--;
+          }
+          if (boardingHour < 0) {
+            boardingHour += 24;
+          }
+          
+          const boardingTime = `${boardingHour.toString().padStart(2, '0')}:${boardingMinute.toString().padStart(2, '0')}:00`;
+          
+          const boardingPoint = {
+            bp_id: crypto.randomUUID(),
+            bus_id: defaultBus.bus_id,
+            route_id: defaultBus.route_id,
+            operator_id: defaultBus.operator_id,
+            operator_name: defaultBus.operator_name,
+            op_bus_id: defaultBus.op_bus_id,
+            op_route_id: defaultBus.op_route_id,
+            op_bp_id: `BP-${defaultBus.bus_id}-${b}`,
+            b_point_name: `${defaultBus.from_city} ${b === 1 ? 'Main Terminal' : 'Stop ' + b}`,
+            b_time: boardingTime,
+            b_address: `${defaultBus.from_city} ${b === 1 ? 'Bus Terminal' : 'Area ' + b}, Main Road`,
+            b_contact: `+91${Math.floor(Math.random() * 9000000000) + 1000000000}`,
+            b_landmark: `Near ${defaultBus.from_city} ${b === 1 ? 'Railway Station' : 'Landmark ' + b}`
+          };
+          
+          const { error: bpInsertError } = await supabaseClient
+            .from("boarding_points")
+            .upsert(boardingPoint, { onConflict: "bp_id" });
+            
+          if (bpInsertError) {
+            console.error(`Error inserting default boarding point ${boardingPoint.bp_id}: ${bpInsertError.message}`);
+          } else {
+            boardingPoints++;
+          }
         }
         
-        // Generate dropping point
-        const droppingPoint = {
-          dp_id: crypto.randomUUID(),
-          bus_id: defaultBus.bus_id,
-          route_id: defaultBus.route_id,
-          operator_id: defaultBus.operator_id,
-          operator_name: defaultBus.operator_name,
-          op_bus_id: defaultBus.op_bus_id,
-          op_route_id: defaultBus.op_route_id,
-          op_dp_id: `DP-${defaultBus.bus_id}-1`,
-          d_point_name: `${defaultBus.to_city} Main Terminal`,
-          d_time: defaultBus.arrival_time,
-          d_address: `${defaultBus.to_city} Bus Terminal, Main Road`,
-          d_contact: `+91${Math.floor(Math.random() * 9000000000) + 1000000000}`,
-          d_landmark: `Near ${defaultBus.to_city} Railway Station`
-        };
-        
-        const { error: dpInsertError } = await supabaseClient
-          .from("dropping_points")
-          .upsert(droppingPoint, { onConflict: "dp_id" });
+        // Generate multiple dropping points for each bus (3 points)
+        for (let d = 1; d <= 3; d++) {
+          const hourOffset = (d - 1) * 0.5;
+          const arrivalHour = parseInt(defaultBus.arrival_time.split(':')[0]);
+          const arrivalMinute = parseInt(defaultBus.arrival_time.split(':')[1]);
           
-        if (dpInsertError) {
-          console.error(`Error inserting default dropping point ${droppingPoint.dp_id}: ${dpInsertError.message}`);
-        } else {
-          droppingPoints++;
+          let droppingHour = arrivalHour + Math.floor(hourOffset);
+          let droppingMinute = arrivalMinute + Math.floor((hourOffset % 1) * 60);
+          
+          if (droppingMinute >= 60) {
+            droppingMinute -= 60;
+            droppingHour++;
+          }
+          if (droppingHour >= 24) {
+            droppingHour -= 24;
+          }
+          
+          const droppingTime = `${droppingHour.toString().padStart(2, '0')}:${droppingMinute.toString().padStart(2, '0')}:00`;
+          
+          const droppingPoint = {
+            dp_id: crypto.randomUUID(),
+            bus_id: defaultBus.bus_id,
+            route_id: defaultBus.route_id,
+            operator_id: defaultBus.operator_id,
+            operator_name: defaultBus.operator_name,
+            op_bus_id: defaultBus.op_bus_id,
+            op_route_id: defaultBus.op_route_id,
+            op_dp_id: `DP-${defaultBus.bus_id}-${d}`,
+            d_point_name: `${defaultBus.to_city} ${d === 1 ? 'Main Terminal' : 'Stop ' + d}`,
+            d_time: droppingTime,
+            d_address: `${defaultBus.to_city} ${d === 1 ? 'Bus Terminal' : 'Area ' + d}, Main Road`,
+            d_contact: `+91${Math.floor(Math.random() * 9000000000) + 1000000000}`,
+            d_landmark: `Near ${defaultBus.to_city} ${d === 1 ? 'Railway Station' : 'Landmark ' + d}`
+          };
+          
+          const { error: dpInsertError } = await supabaseClient
+            .from("dropping_points")
+            .upsert(droppingPoint, { onConflict: "dp_id" });
+            
+          if (dpInsertError) {
+            console.error(`Error inserting default dropping point ${droppingPoint.dp_id}: ${dpInsertError.message}`);
+          } else {
+            droppingPoints++;
+          }
         }
       }
     }
