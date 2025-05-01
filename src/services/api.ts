@@ -94,7 +94,7 @@ export const BusService = {
     return data;
   },
 
-  // New method to subscribe to realtime bus updates
+  // Method to subscribe to realtime bus updates
   subscribeToRealtimeBusUpdates(callback: (payload: any) => void) {
     const channel = supabase.channel('public:bus_list')
       .on('postgres_changes', { 
@@ -104,7 +104,9 @@ export const BusService = {
       }, payload => {
         callback(payload);
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Bus realtime subscription status:', status);
+      });
 
     return () => {
       supabase.removeChannel(channel);
@@ -115,6 +117,7 @@ export const BusService = {
 // Seat Service
 export const SeatService = {
   async getBusLayout(busId: string, journeyDate: string) {
+    console.log(`Fetching bus layout for busId: ${busId}, date: ${journeyDate}`);
     const { data, error } = await supabase
       .from('bus_layout')
       .select('*')
@@ -126,11 +129,13 @@ export const SeatService = {
       throw new Error(error.message);
     }
     
+    console.log(`Found ${data?.length || 0} seats for bus ${busId}`);
     return data || [];
   },
 
-  // New method to subscribe to realtime seat updates
+  // Method to subscribe to realtime seat updates
   subscribeToRealtimeSeatUpdates(busId: string, callback: (payload: any) => void) {
+    console.log(`Setting up realtime subscription for bus ${busId} seats`);
     const channel = supabase.channel('public:bus_layout')
       .on('postgres_changes', { 
         event: 'UPDATE', 
@@ -138,11 +143,15 @@ export const SeatService = {
         table: 'bus_layout',
         filter: `bus_id=eq.${busId}` 
       }, payload => {
+        console.log('Received seat update:', payload);
         callback(payload);
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Seat realtime subscription status:', status);
+      });
 
     return () => {
+      console.log(`Removing realtime subscription for bus ${busId} seats`);
       supabase.removeChannel(channel);
     };
   }
@@ -151,6 +160,7 @@ export const SeatService = {
 // BoardingPoint Service
 export const BoardingPointService = {
   async getBoardingPoints(busId: string) {
+    console.log(`Fetching boarding points for bus: ${busId}`);
     const { data, error } = await supabase
       .from('boarding_points')
       .select('*')
@@ -162,6 +172,7 @@ export const BoardingPointService = {
       throw new Error(error.message);
     }
     
+    console.log(`Found ${data?.length || 0} boarding points for bus ${busId}`);
     return data || [];
   }
 };
@@ -169,6 +180,7 @@ export const BoardingPointService = {
 // DroppingPoint Service
 export const DroppingPointService = {
   async getDroppingPoints(busId: string) {
+    console.log(`Fetching dropping points for bus: ${busId}`);
     const { data, error } = await supabase
       .from('dropping_points')
       .select('*')
@@ -180,6 +192,7 @@ export const DroppingPointService = {
       throw new Error(error.message);
     }
     
+    console.log(`Found ${data?.length || 0} dropping points for bus ${busId}`);
     return data || [];
   }
 };
@@ -357,6 +370,7 @@ export const CouponService = {
 export const InitDatabaseService = {
   async initializeDatabase() {
     try {
+      console.log('Initializing database...');
       const { data, error } = await supabase.functions.invoke('init-database', {
         body: {}
       });
@@ -366,6 +380,7 @@ export const InitDatabaseService = {
         throw new Error(error.message);
       }
       
+      console.log('Database initialization complete!', data);
       return data;
     } catch (error) {
       console.error('Error initializing database:', error);

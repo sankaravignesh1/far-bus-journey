@@ -151,8 +151,9 @@ serve(async (req) => {
       console.log("Created travel policies");
     }
     
-    // Set up realtime listening by enabling realtime for bus_layout table
+    // Enable realtime for necessary tables
     try {
+      // Enable realtime for bus_layout table
       await supabaseClient.rpc('supabase_functions.http_request', {
         "method": 'POST',
         "url": `${Deno.env.get("SUPABASE_URL")}/rest/v1/rpc/enable_realtime`,
@@ -166,8 +167,77 @@ serve(async (req) => {
         }
       });
       console.log("Enabled realtime for bus_layout table");
+      
+      // Enable realtime for bus_list table
+      await supabaseClient.rpc('supabase_functions.http_request', {
+        "method": 'POST',
+        "url": `${Deno.env.get("SUPABASE_URL")}/rest/v1/rpc/enable_realtime`,
+        "headers": {
+          "Content-Type": "application/json",
+          "Prefer": "return=minimal",
+          "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`
+        },
+        "body": { 
+          "tables": ["bus_list"] 
+        }
+      });
+      console.log("Enabled realtime for bus_list table");
+      
+      // Enable realtime for boarding_points table
+      await supabaseClient.rpc('supabase_functions.http_request', {
+        "method": 'POST',
+        "url": `${Deno.env.get("SUPABASE_URL")}/rest/v1/rpc/enable_realtime`,
+        "headers": {
+          "Content-Type": "application/json",
+          "Prefer": "return=minimal",
+          "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`
+        },
+        "body": { 
+          "tables": ["boarding_points"] 
+        }
+      });
+      console.log("Enabled realtime for boarding_points table");
+      
+      // Enable realtime for dropping_points table
+      await supabaseClient.rpc('supabase_functions.http_request', {
+        "method": 'POST',
+        "url": `${Deno.env.get("SUPABASE_URL")}/rest/v1/rpc/enable_realtime`,
+        "headers": {
+          "Content-Type": "application/json",
+          "Prefer": "return=minimal",
+          "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`
+        },
+        "body": { 
+          "tables": ["dropping_points"] 
+        }
+      });
+      console.log("Enabled realtime for dropping_points table");
     } catch (error) {
       console.warn(`Failed to enable realtime: ${error.message}`);
+    }
+    
+    // Make sure tables have REPLICA IDENTITY set to FULL for better realtime updates
+    try {
+      await supabaseClient.rpc('supabase_functions.http_request', {
+        "method": 'POST',
+        "url": `${Deno.env.get("SUPABASE_URL")}/rest/v1/rpc/execute_sql`,
+        "headers": {
+          "Content-Type": "application/json",
+          "Prefer": "return=minimal",
+          "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`
+        },
+        "body": { 
+          "sql": `
+            ALTER TABLE IF EXISTS public.bus_layout REPLICA IDENTITY FULL;
+            ALTER TABLE IF EXISTS public.bus_list REPLICA IDENTITY FULL;
+            ALTER TABLE IF EXISTS public.boarding_points REPLICA IDENTITY FULL;
+            ALTER TABLE IF EXISTS public.dropping_points REPLICA IDENTITY FULL;
+          ` 
+        }
+      });
+      console.log("Set REPLICA IDENTITY to FULL for required tables");
+    } catch (error) {
+      console.warn(`Failed to set REPLICA IDENTITY: ${error.message}`);
     }
     
     return new Response(
