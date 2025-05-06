@@ -49,9 +49,6 @@ const Navbar = () => {
                   <Link to="/send-ticket" className="w-full">Send SMS / Email</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/reschedule-ticket" className="w-full">Reschedule Ticket</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
                   <Link to="/check-refund" className="w-full">Check Refund Status</Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -122,13 +119,6 @@ const Navbar = () => {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Send SMS / Email
-                </Link>
-                <Link 
-                  to="/reschedule-ticket"
-                  className="block text-sm hover:text-far-green py-1"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Reschedule Ticket
                 </Link>
                 <Link 
                   to="/check-refund"
