@@ -16,14 +16,8 @@ const BusCard: React.FC<BusCardProps> = ({ bus, journeyDate }) => {
         <div className="lg:col-span-2">
           <h3 className="text-xl font-serif">{bus.operator_name}</h3>
           <div className="flex items-center gap-3 mt-2 text-sm text-far-black/70">
-            <span className={`px-2 py-1 rounded ${bus.bus_type === 'AC' ? 'bg-far-cream text-far-black' : 'bg-far-black/10 text-far-black/60'}`}>
-              {bus.bus_type}
-            </span>
-            <span className={`px-2 py-1 rounded ${bus.category === 'Sleeper' ? 'bg-far-black/10' : 'bg-far-black/5'}`}>
-              {bus.category}
-            </span>
-            <span className="flex items-center">
-              <Clock className="inline h-4 w-4 mr-1" /> {bus.duration}
+            <span className={`px-2 py-1 rounded ${bus.bus_type.toLowerCase().includes('ac') ? 'bg-far-cream text-far-black' : 'bg-far-black/10 text-far-black/60' }`} >
+               {bus.bus_type}                                     
             </span>
           </div>
           <div className="mt-4 flex justify-between">
