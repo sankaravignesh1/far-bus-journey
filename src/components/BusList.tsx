@@ -45,19 +45,19 @@ const BusList: React.FC<BusListProps> = ({ buses, journeyDate }) => {
     
     // Apply AC/Non-AC filter
     const typeMatch = 
-      (filters.ac && bus.type === 'AC') || 
-      (filters.nonAc && bus.type === 'Non-AC') || 
+      (filters.ac && bus.bus_type.toLowerCase().includes('ac') && !bus.bus_type.toLowerCase().includes('non-ac')) ||
+      (filters.nonAc && bus.bus_type.toLowerCase().includes('non-ac')) ||
       (!filters.ac && !filters.nonAc);
     
     // Apply Sleeper/Seater filter
     const categoryMatch = 
-      (filters.sleeper && bus.category === 'Sleeper') || 
-      (filters.seater && bus.category === 'Seater') || 
+      (filters.sleeper && bus.bus_type.toLowerCase().includes('sleeper')) ||
+      (filters.seater && bus.bus_type.toLowerCase().includes('seater')) || 
       (!filters.sleeper && !filters.seater);
     
     // Apply Single Seats filter
     const singleSeatsMatch = 
-      (filters.singleSeats && bus.singleSeats > 0) || 
+      (filters.singleSeats && bus.singleseats_available > 0) || 
       !filters.singleSeats;
     
     return typeMatch && categoryMatch && singleSeatsMatch;
@@ -150,7 +150,7 @@ const BusList: React.FC<BusListProps> = ({ buses, journeyDate }) => {
         </div>
       ) : (
         filteredBuses.map(bus => (
-          <BusCard key={bus.id} bus={bus} journeyDate={journeyDate} />
+          <BusCard key={bus.bus_id} bus={bus} journeyDate={journeyDate} />
         ))
       )}
     </div>
