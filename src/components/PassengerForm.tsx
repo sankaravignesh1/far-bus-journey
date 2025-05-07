@@ -60,7 +60,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
           if (field === "gender" && p.requiresFemale && value === "male") {
             toast({
               title: "Gender Restriction",
-              description: `Seat ${p.seatNumber} can only be booked for a female passenger due to female passengers in the same column.`,
+              description: `Seat ${p.seatNumber} can only be booked for a female passenger due to female passenger neighbour.`,
               variant: "destructive",
             });
             return p; // Don't update, keep as female
@@ -83,7 +83,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
     if (invalidGenderAssignment) {
       toast({
         title: "Gender Restriction",
-        description: "Some seats can only be booked for female passengers due to female passengers in the same column.",
+        description: "Some seats can only be booked for female passengers due to female passenger neighbour.",
         variant: "destructive",
       });
       return;
@@ -101,7 +101,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
     navigate("/");
   };
   
-  const totalAmount = fare * selectedSeats.length;
+  const totalAmount = selectedSeats.reduce((sum, seat) => sum + (seat.fare ?? fare), 0);
 
   return (
     <div className="animate-fade-in">
@@ -162,7 +162,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
                   </select>
                   {passenger.requiresFemale && (
                     <p className="text-xs text-pink-700 mt-1">
-                      Due to female passengers in the same column, this seat can only be booked for a female passenger.
+                      Due to female passenger neighbour, this seat can only be booked for a female passenger.
                     </p>
                   )}
                 </div>
@@ -254,12 +254,12 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
           <h3 className="text-xl font-serif mb-6">Fare Summary</h3>
           <div className="card">
             <div className="flex justify-between mb-2">
-              <span>Base Fare ({selectedSeats.length} seats)</span>
-              <span>₹{fare} × {selectedSeats.length} = ₹{totalAmount}</span>
+              <span>Total Base Fare ({selectedSeats.length} seats)</span>
+              <span>₹{totalAmount}</span>
             </div>
             <div className="flex justify-between mb-2">
               <span>GST</span>
-              <span>Included</span>
+              <span>Excluded</span>
             </div>
             <div className="border-t border-far-lightgray my-4"></div>
             <div className="flex justify-between font-semibold">
@@ -269,25 +269,14 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
           </div>
         </div>
         
-        <div className="flex items-start space-x-2 mb-6">
-          <input
-            type="checkbox"
-            id="terms"
-            checked={acceptedTerms}
-            onChange={(e) => setAcceptedTerms(e.target.checked)}
-            className="mt-1"
-            required
-          />
-          <label htmlFor="terms" className="text-sm">
-            I accept the <a href="#" className="text-far-green">terms and conditions</a> and <a href="#" className="text-far-green">cancellation policy</a>
-          </label>
+        <div className="text-sm text-center mb-6">
+          By continuing, I agree to the <a href="#" className="text-far-green underline">terms and conditions</a>.  
         </div>
         
         <div className="flex justify-center">
           <button
             type="submit"
             className="btn-primary flex items-center"
-            disabled={!acceptedTerms}
           >
             <Check className="h-4 w-4 mr-2" />
             Proceed to Payment
