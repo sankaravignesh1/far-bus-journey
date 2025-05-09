@@ -14,15 +14,18 @@ const BusCard: React.FC<BusCardProps> = ({ bus, journeyDate }) => {
     <div className="card my-4 hover:shadow-lg transition-shadow">
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div className="lg:col-span-2">
-          <h3 className="text-xl font-serif">{bus.operator_name}</h3>
+          <h3 className="text-xl font-serif">{bus.name}</h3>
           <div className="flex items-center gap-3 mt-2 text-sm text-far-black/70">
-            <span className={`px-2 py-1 rounded ${bus.bus_type.toLowerCase().includes('ac') ? 'bg-far-cream text-far-black' : 'bg-far-black/10 text-far-black/60' }`} >
-               {bus.bus_type}                                     
+            <span className={`px-2 py-1 rounded ${bus.type.toLowerCase().includes('ac') ? 'bg-far-cream text-far-black' : 'bg-far-black/10 text-far-black/60' }`} >
+               {bus.type}                                     
+            </span>
+            <span className="flex items-center">
+              <Clock className="inline h-4 w-4 mr-1" /> {bus.duration}
             </span>
           </div>
           <div className="mt-4 flex justify-between">
             <div>
-              <p className="text-2xl font-semibold">{bus.departure_time}</p>
+              <p className="text-2xl font-semibold">{bus.departureTime}</p>
               <p className="text-xs text-far-black/60">Departure</p>
             </div>
             <div className="flex items-center px-4">
@@ -31,7 +34,7 @@ const BusCard: React.FC<BusCardProps> = ({ bus, journeyDate }) => {
               <div className="w-2 h-2 rounded-full bg-far-cream"></div>
             </div>
             <div>
-              <p className="text-2xl font-semibold">{bus.arrival_time}</p>
+              <p className="text-2xl font-semibold">{bus.arrivalTime}</p>
               <p className="text-xs text-far-black/60">Arrival</p>
             </div>
           </div>
@@ -49,12 +52,12 @@ const BusCard: React.FC<BusCardProps> = ({ bus, journeyDate }) => {
           <div className="mt-4 flex flex-col gap-2 text-sm">
             <div className="flex items-center">
               <User className="h-4 w-4 mr-1 text-far-cream" />
-              <span><span className="font-semibold">{bus.available_seats}</span> Seats Available</span>
+              <span><span className="font-semibold">{bus.availableSeats}</span> Seats Available</span>
             </div>
-            {bus.singleseats_available > 0 && (
+            {bus.singleSeats > 0 && (
               <div className="flex items-center">
                 <User className="h-4 w-4 mr-1 text-far-cream" />
-                <span><span className="font-semibold">{bus.singleseats_available}</span> Single Seats</span>
+                <span><span className="font-semibold">{bus.singleSeats}</span> Single Seats</span>
               </div>
             )}
           </div>
@@ -62,8 +65,8 @@ const BusCard: React.FC<BusCardProps> = ({ bus, journeyDate }) => {
         
         <div className="text-center flex flex-col justify-between lg:border-l lg:border-l-far-lightgray lg:pl-6">
           <div>
-            <p className="text-far-black text-2xl font-semibold">₹{bus.starting_fare}</p>
-            <p className="text-xs text-far-black/60">Per seat</p>
+            <p className="text-far-black text-2xl font-semibold">₹{bus.fare}</p>
+            <p className="text-xs text-far-black/60">Onwards</p>
           </div>
           <Link 
             to={`/seat-selection/${bus.id}?date=${journeyDate}`} 
