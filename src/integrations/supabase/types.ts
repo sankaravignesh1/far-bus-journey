@@ -17,10 +17,10 @@ export type Database = {
           b_location: unknown | null
           b_point_name: string
           b_time: string
-          bp_id: string
+          bp_id?: string
           bus_id: string
           created_at: string | null
-          id: string
+          id?: string
           op_bp_id: string
           op_bus_id: string
           op_route_id: string
@@ -36,7 +36,7 @@ export type Database = {
           b_location?: unknown | null
           b_point_name: string
           b_time: string
-          bp_id: string
+          bp_id?: string
           bus_id: string
           created_at?: string | null
           id?: string
@@ -310,10 +310,10 @@ export type Database = {
           deck: string | null
           discounted_price: number | null
           height: number
-          id: string
-          is_double_berth: boolean | null
+          id?: string
+          is_double_berth: boolean 
           is_ladies_seat: boolean | null
-          last_fetched_at: string | null
+          last_fetched_at: string 
           max_lower_column: number | null
           max_lower_row: number | null
           max_upper_column: number | null
@@ -325,7 +325,7 @@ export type Database = {
           operator_name: string
           original_price: number
           route_id: string
-          seat_id: string
+          seat_id?: string
           seat_name: string
           seat_res_type: string | null
           seat_type: string | null
@@ -336,17 +336,17 @@ export type Database = {
           z_pos: number
         }
         Insert: {
-          available?: boolean | null
+          available: boolean
           bus_id: string
-          created_at?: string | null
+          created_at?: string 
           date_of_journey: string
-          deck?: string | null
+          deck: string
           discounted_price?: number | null
-          height?: number
+          height: number
           id?: string
-          is_double_berth?: boolean | null
+          is_double_berth: boolean 
           is_ladies_seat?: boolean | null
-          last_fetched_at?: string | null
+          last_fetched_at?: string 
           max_lower_column?: number | null
           max_lower_row?: number | null
           max_upper_column?: number | null
@@ -358,12 +358,12 @@ export type Database = {
           operator_name: string
           original_price: number
           route_id: string
-          seat_id: string
+          seat_id?: string
           seat_name: string
           seat_res_type?: string | null
           seat_type?: string | null
           updated_at?: string | null
-          width?: number
+          width: number
           x_pos: number
           y_pos: number
           z_pos: number
@@ -429,17 +429,17 @@ export type Database = {
         Row: {
           amenities: Json | null
           arrival_time: string
-          available_seats: number | null
-          bus_category: string | null
-          bus_id: string
-          bus_type: string | null
-          created_at: string | null
+          available_seats: number 
+          bus_category?: string | null
+          bus_id?: string
+          bus_type: string 
+          created_at?: string
           departure_time: string
-          duration: string | null
+          duration: string 
           from_city: string
-          id: string
+          id?: string
           journey_date: string
-          last_fetched_at: string | null
+          last_fetched_at?: string 
           max_lower_column: number | null
           max_lower_row: number | null
           max_upper_column: number | null
@@ -449,25 +449,25 @@ export type Database = {
           operator_id: string
           operator_name: string
           route_id: string
-          singleseats_available: number | null
+          singleseats_available: number 
           starting_fare: number
           to_city: string
-          updated_at: string | null
+          updated_at?: string | null
         }
         Insert: {
-          amenities?: Json | null
+          amenities: Json 
           arrival_time: string
-          available_seats?: number | null
+          available_seats: number 
           bus_category?: string | null
-          bus_id: string
-          bus_type?: string | null
-          created_at?: string | null
+          bus_id?: string
+          bus_type: string 
+          created_at?: string 
           departure_time: string
-          duration?: string | null
+          duration: string 
           from_city: string
           id?: string
           journey_date: string
-          last_fetched_at?: string | null
+          last_fetched_at?: string
           max_lower_column?: number | null
           max_lower_row?: number | null
           max_upper_column?: number | null
@@ -477,10 +477,10 @@ export type Database = {
           operator_id: string
           operator_name: string
           route_id: string
-          singleseats_available?: number | null
+          singleseats_available: number 
           starting_fare: number
           to_city: string
-          updated_at?: string | null
+          updated_at?: string 
         }
         Update: {
           amenities?: Json | null
@@ -666,15 +666,15 @@ export type Database = {
       dropping_points: {
         Row: {
           bus_id: string
-          created_at: string | null
-          d_address: string | null
+          created_at?: string | null
+          d_address: string 
           d_contact: string | null
           d_landmark: string | null
           d_location: unknown | null
           d_point_name: string
           d_time: string
-          dp_id: string
-          id: string
+          dp_id?: string
+          id?: string
           op_bus_id: string
           op_dp_id: string
           op_route_id: string
@@ -686,13 +686,13 @@ export type Database = {
         Insert: {
           bus_id: string
           created_at?: string | null
-          d_address?: string | null
+          d_address: string 
           d_contact?: string | null
           d_landmark?: string | null
           d_location?: unknown | null
           d_point_name: string
           d_time: string
-          dp_id: string
+          dp_id?: string
           id?: string
           op_bus_id: string
           op_dp_id: string
