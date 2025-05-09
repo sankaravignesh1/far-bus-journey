@@ -98,7 +98,7 @@ export type Database = {
           booking_id: string
           bus_id: string
           bus_type: string | null
-          created_at: string | null
+          created_at: string 
           date_of_journey: string
           dropping_point: string
           gender: string
@@ -121,10 +121,10 @@ export type Database = {
         Insert: {
           age: number
           boarding_point: string
-          booking_id: string
+          booking_id?: string
           bus_id: string
           bus_type?: string | null
-          created_at?: string | null
+          created_at?: string 
           date_of_journey: string
           dropping_point: string
           gender: string
@@ -140,7 +140,7 @@ export type Database = {
           seat_id: string
           seat_name: string
           seat_type?: string | null
-          status?: string
+          status: string
           total_fare: number
           updated_at?: string | null
         }
@@ -150,7 +150,7 @@ export type Database = {
           booking_id?: string
           bus_id?: string
           bus_type?: string | null
-          created_at?: string | null
+          created_at?: string 
           date_of_journey?: string
           dropping_point?: string
           gender?: string
@@ -206,7 +206,7 @@ export type Database = {
           boarding_point: string
           booking_ids: string
           bus_id: string
-          created_at: string | null
+          created_at: string 
           date_of_journey: string
           dropping_point: string
           email: string
@@ -231,7 +231,7 @@ export type Database = {
           boarding_point: string
           booking_ids: string
           bus_id: string
-          created_at?: string | null
+          created_at?: string 
           date_of_journey: string
           dropping_point: string
           email: string
@@ -247,7 +247,7 @@ export type Database = {
           pnr: string
           route_id: string
           seat_names: string
-          status?: string
+          status: string
           to_city: string
           total_base_fare: number
           total_fare: number
@@ -303,7 +303,7 @@ export type Database = {
       }
       bus_layout: {
         Row: {
-          available: boolean | null
+          available: boolean 
           bus_id: string
           created_at: string | null
           date_of_journey: string
