@@ -244,7 +244,7 @@ export type Database = {
           operator_id: string
           operator_name: string
           passenger_names: string
-          pnr: string
+          pnr?: string
           route_id: string
           seat_names: string
           status: string
@@ -824,30 +824,30 @@ export type Database = {
       }
       reviews: {
         Row: {
-          avg_review: number | null
+          avg_review?: number | null
           cleanliness: number | null
-          created_at: string | null
+          created_at?: string
           driving: number | null
           five_star: number | null
           four_star: number | null
-          id: string
+          id?: string
           live_tracking: number | null
           one_star: number | null
           operator_id: string
           operator_name: string
           punctual: number | null
           rest_stop_hygiene: number | null
-          reviewer_count: number | null
+          reviewer_count?: number | null
           seat_comfort: number | null
           staff_behaviour: number | null
           three_star: number | null
           two_star: number | null
-          updated_at: string | null
+          updated_at?: string | null
         }
         Insert: {
           avg_review?: number | null
           cleanliness?: number | null
-          created_at?: string | null
+          created_at?: string 
           driving?: number | null
           five_star?: number | null
           four_star?: number | null
@@ -863,7 +863,7 @@ export type Database = {
           staff_behaviour?: number | null
           three_star?: number | null
           two_star?: number | null
-          updated_at?: string | null
+          updated_at?: string 
         }
         Update: {
           avg_review?: number | null
@@ -950,11 +950,11 @@ export type Database = {
       transactions: {
         Row: {
           booking_ids: string
-          created_at: string | null
-          discounts: number | null
+          created_at?: string | null
+          discounts?: number 
           email: string
           gst: number
-          id: string
+          id?: string
           mobile: string
           payment_gateway_order_id: string
           payment_gateway_payment_id: string
@@ -969,8 +969,8 @@ export type Database = {
         }
         Insert: {
           booking_ids: string
-          created_at?: string | null
-          discounts?: number | null
+          created_at?: string 
+          discounts?: number 
           email: string
           gst: number
           id?: string
