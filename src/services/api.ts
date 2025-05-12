@@ -165,6 +165,7 @@ export const BoardingPointService = {
       .from('boarding_points')
       .select('*')
       .eq('bus_id', busId)
+      .eq('route_id', routeId)
       .order('b_time', { ascending: true });
       
     if (error) {
@@ -208,6 +209,7 @@ export const DroppingPointService = {
       .from('dropping_points')
       .select('*')
       .eq('bus_id', busId)
+      .eq('route_id', routeId)
       .order('d_time', { ascending: true });
       
     if (error) {
@@ -387,6 +389,7 @@ export const CouponService = {
       .from('coupons')
       .select('*')
       .eq('coupon_code', code)
+      .eq('from_city_id', fromCityId)
       .gte('valid_to', new Date().toISOString().split('T')[0])
       .single();
       
@@ -395,13 +398,8 @@ export const CouponService = {
       return { valid: false, message: 'Invalid coupon code' };
     }
     
-    if (data.min_fare && fare < data.min_fare) {
-      return { valid: false, message: `Minimum fare of ₹${data.min_fare} required` };
-    }
-    
-    const discountAmount = (fare * data.discount / 100);
-    const maxDiscount = data.max_discount || Infinity;
-    const finalDiscount = Math.min(discountAmount, maxDiscount);
+
+    const finalDiscount = (fare * data.discount / 100);
     
     return {
       valid: true,
@@ -411,6 +409,7 @@ export const CouponService = {
     };
   }
 };
+
 
 // Database Initialization Service - to seed the database with real data
 export const InitDatabaseService = {
