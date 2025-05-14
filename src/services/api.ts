@@ -57,7 +57,7 @@ export const RouteService = {
 
 // Bus Service
 export const BusService = {
-  async searchBuses(routeId: string, journeyDate: string) {
+  async searchBuses(routeId: string, journeyDate: string, fromCity: string, toCity: string) {
     const { data, error } = await supabase
       .from('bus_list')
       .select(`
@@ -65,6 +65,8 @@ export const BusService = {
         routes(*)
       `)
       .eq('route_id', routeId)
+      .eq('from_city', fromCity);
+      .eq('to_city', toCity); 
       .eq('journey_date', journeyDate);
       
     if (error) {
