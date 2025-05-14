@@ -179,14 +179,37 @@ serve(async (req) => {
          
          // Process and insert third-party buses
          for (const bus of thirdPartyBuses) {
-           // Format bus data to match our schema
+          const fromCity = bus.from_city?.trim();
+          const toCity = bus.to_city?.trim();
+           
+          let rte_id = null; // routeID
+          if (fromCity && toCity) {
+              const { data: routeData, error: routeError } = await supabaseClient
+                .from("routes")
+                .select("route_id")
+                .eq("from_city_name", fromCity)
+                .eq("to_city_name", toCity)
+                .maybeSingle();
+              if (routeData) {
+                rte_id = routeData.route_id;
+              } else {
+                 console.warn(`⚠️ Route not found for: ${fromCity} → ${toCity}`);
+              }
+              if (routeError) {
+                  console.error(`❌ Error fetching route: ${routeError.message}`);
+              }
+          } else {
+             console.warn("⚠️ Missing from_city or to_city in bus data");
+          }
+          
+          // Format bus data to match our schema
           const formattedBus = {
              bus_id: `BUS${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
              operator_id: operators.operator_id,
              operator_name: operators.operator_name,
-             op_bus_id: bus.op_bus_id || bus.bus_id,
+             op_bus_id: bus.id || bus.bus_id,
              op_route_id: bus.op_route_id || bus.route_id,
-             route_id: bus.route_id || routes[0]?.route_id,
+             route_id: rte_id,
              bus_type: bus.bus_type ,
              bus_category: bus.bus_category || null,
              from_city: bus.from_city,
