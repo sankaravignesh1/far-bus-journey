@@ -283,28 +283,28 @@ serve(async (req) => {
                   operator_name: operators.operator_name,
                   bus_id: formattedBus.bus_id,
                   route_id: formattedBus.route_id,
-                  op_seat_id: seat.op_seat_id || seat.seat_id,
+                  op_seat_id: seat.op_seat_id || seat.seat_id || seat.id,
                   op_bus_id: formattedBus.op_bus_id,
                   op_route_id: formattedBus.op_route_id,
-                  seat_name: seat.seat_name || `Seat-${Math.floor(Math.random() * 40) + 1}`,
-                  seat_type: seat.seat_type || formattedBus.bus_category,
+                  seat_name: seat.seat_name || seat.name,
+                  seat_type: seat.seat_type || seat.type,
                   deck: deckValue,
                   available: seat.available !== undefined ? seat.available : true,
-                  original_price: seat.original_price || formattedBus.starting_fare,
-                  discounted_price: seat.discounted_price,
-                  is_ladies_seat: seat.is_ladies_seat || false,
-                  x_pos: seat.x_pos || Math.floor(Math.random() * 10),
-                  y_pos: seat.y_pos || Math.floor(Math.random() * 4),
-                  z_pos: seat.z_pos || (deckValue === 'upper' ? 1 : 0),
-                  width: seat.width || 1,
-                  height: seat.height || 1,
-                  is_double_berth: seat.is_double_berth || false,
-                  seat_res_type: seat.seat_res_type || null,
+                  original_price: seat.original_price || seat. op_value,
+                  discounted_price: seat.discounted_price || seat.dp_value,
+                  is_ladies_seat: seat.is_ladies_seat || seat.ladies_seat || false,
+                  x_pos: seat.x_pos || seat.x || seat.X,
+                  y_pos: seat.y_pos || seat.y || seat.Y,
+                  z_pos: seat.z_pos || seat.z || seat.Z,
+                  width: seat.width,
+                  height: seat.height || seat.length,
+                  is_double_berth: seat.is_double_berth || seat.double_berth || false,
+                  seat_res_type: seat.seat_res_type || seat.res_type || seat.reservation || null,
                   date_of_journey: formattedBus.journey_date,
-                  max_lower_column: formattedBus.max_lower_column,
-                  max_lower_row: formattedBus.max_lower_row,
-                  max_upper_column: formattedBus.max_upper_column,
-                  max_upper_row: formattedBus.max_upper_row
+                  max_lower_column: seat.max_lower_column || seat.maxLowerColumns || seat.max_lower_columns || formattedBus.max_lower_column,
+                  max_lower_row: seat.max_lower_row || seat.maxLowerRows || seat.max_lower_rows || formattedBus.max_lower_row,
+                  max_upper_column: seat.max_upper_column || seat.maxUpperColumns || seat.max_upper_columns || formattedBus.max_upper_column,
+                  max_upper_row: seat.max_upper_row || seat.maxUpperRows || seat.max_upper_rows || formattedBus.max_upper_row,
                 };
                 
                 const { error: seatInsertError } = await supabaseClient
@@ -317,54 +317,6 @@ serve(async (req) => {
                   busLayouts++;
                 }
               }
-            } else {
-              console.log(`No layouts found for bus ${bus.bus_id}, generating random layouts`);
-              
-              // Generate random layouts if none found
-              const totalSeats = Math.floor(Math.random() * 30) + 20;
-              for (let i = 1; i <= totalSeats; i++) {
-                const seatDeck = i % 2 === 0 ? 'upper' : 'lower';
-                const formattedSeat = {
-                  seat_id: `SEAT-${formattedBus.bus_id}-${i}`,
-                  operator_id: formattedBus.operator_id,
-                  operator_name: formattedBus.operator_name,
-                  bus_id: formattedBus.bus_id,
-                  route_id: formattedBus.route_id,
-                  op_seat_id: `SEAT-${i}`,
-                  op_bus_id: formattedBus.op_bus_id,
-                  op_route_id: formattedBus.op_route_id,
-                  seat_name: `Seat-${i}`,
-                  seat_type: formattedBus.bus_category,
-                  deck: seatDeck,
-                  available: Math.random() > 0.3,
-                  original_price: formattedBus.starting_fare,
-                  discounted_price: Math.random() > 0.5 ? formattedBus.starting_fare * 0.9 : null,
-                  is_ladies_seat: Math.random() > 0.8,
-                  x_pos: Math.floor(i / 4) % 10,
-                  y_pos: i % 4,
-                  z_pos: seatDeck === 'upper' ? 1 : 0,
-                  width: 1,
-                  height: 1,
-                  is_double_berth: Math.random() > 0.7,
-                  seat_res_type: null,
-                  date_of_journey: formattedBus.journey_date,
-                  max_lower_column: formattedBus.max_lower_column,
-                  max_lower_row: formattedBus.max_lower_row,
-                  max_upper_column: formattedBus.max_upper_column,
-                  max_upper_row: formattedBus.max_upper_row
-                };
-                
-                const { error: seatInsertError } = await supabaseClient
-                  .from("bus_layout")
-                  .upsert(formattedSeat, { onConflict: "seat_id" });
-                  
-                if (seatInsertError) {
-                  console.error(`Error inserting generated seat ${formattedSeat.seat_id}: ${seatInsertError.message}`);
-                } else {
-                  busLayouts++;
-                }
-              }
-            }
           } catch (error) {
             console.warn(`Error processing layout for bus ${bus.bus_id}: ${error.message}`);
           }
