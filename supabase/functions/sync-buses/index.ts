@@ -146,46 +146,63 @@ serve(async (req) => {
     let busLayouts = 0;
     let boardingPoints = 0;
     let droppingPoints = 0;
+
+    const pageSize = 500;
+    let page = 0;
+    let done = false;
+
+    // Get today's date in YYYY-MM-DD format
+    const today = new Date().toISOString().split("T")[0];
     
     try {
       // First try to get bus data from third-party API
-      const { data: thirdPartyBuses, error: thirdPartyBusesError } = await thirdPartyClient
-        .from("bus_lists")
-        .select("*")
-        .limit(500);
-      
-      if (thirdPartyBusesError) {
-        console.warn(`Warning: Failed to fetch buses from third-party API: ${thirdPartyBusesError.message}`);
-        throw new Error("Failed to fetch buses from third-party API");
-      } else if (thirdPartyBuses && thirdPartyBuses.length > 0) {
-        console.log(`Successfully fetched ${thirdPartyBuses.length} buses from third-party API`);
-        
-        // Process and insert third-party buses
-        for (const bus of thirdPartyBuses) {
-          // Format bus data to match our schema
+       while (!done) {
+         const fromIndex = page * pageSize;
+         const toIndex = fromIndex + pageSize - 1;
+         
+         const { data: thirdPartyBuses, error: thirdPartyBusesError } = await thirdPartyClient
+            .from("bus_lists")
+            .select("*")
+            .gte("journey_date", today) // Filter: Only fetch future journeys
+            .range(fromIndex, toIndex);
+         
+         if (thirdPartyBusesError) {
+           console.warn(`Warning: Failed to fetch buses from third-party API: ${thirdPartyBusesError.message}`);
+           throw new Error("Failed to fetch buses from third-party API");
+         } 
+           
+         if (!thirdPartyBuses || thirdPartyBuses.length === 0) {
+              console.log("No more future-dated buses to fetch");
+              break;
+         }  
+         console.log(`Fetched ${thirdPartyBuses.length} buses from index ${fromIndex} to ${toIndex}`);
+         
+         // Process and insert third-party buses
+         for (const bus of thirdPartyBuses) {
+           // Format bus data to match our schema
           const formattedBus = {
-            bus_id: `BUS${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
-            operator_id: bus.operator_id || operators[0].operator_id,
-            operator_name: bus.operator_name || operators[0].operator_name,
-            op_bus_id: bus.op_bus_id || bus.bus_id,
-            op_route_id: bus.op_route_id || bus.route_id || routes[0]?.route_id,
-            route_id: bus.route_id || routes[0]?.route_id,
-            bus_type: bus.bus_type ,
-            bus_category: bus.bus_category || "Sleeper",
-            from_city: bus.from_city || routes[0]?.from_city_name,
-            to_city: bus.to_city || routes[0]?.to_city_name,
-            journey_date: bus.journey_date,
-            departure_time: ensureValidTimeFormat(bus.departure_time),
-            arrival_time: ensureValidTimeFormat(bus.arrival_time),
-            duration: bus.duration,
-            available_seats: bus.available_seats,
-            singleseats_available: bus.singleseats_available,
-            starting_fare: bus.starting_fare,
-            amenities: bus.amenities,
-            max_lower_column: bus.max_lower_column || 12,
-            max_lower_row: bus.max_lower_row || 5,
-            max_upper_column: bus.max_upper_column || 12,
-            max_upper_row: bus.max_upper_row || 5,
+             bus_id: `BUS${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
+             operator_id: operators.operator_id,
+             operator_name: operators.operator_name,
+             op_bus_id: bus.op_bus_id || bus.bus_id,
+             op_route_id: bus.op_route_id || bus.route_id,
+             route_id: bus.route_id || routes[0]?.route_id,
+             bus_type: bus.bus_type ,
+             bus_category: bus.bus_category || null,
+             from_city: bus.from_city,
+             to_city: bus.to_city,
+             journey_date: bus.journey_date || bus.date_of_journey,
+             departure_time: ensureValidTimeFormat(bus.departure_time),
+             arrival_time: ensureValidTimeFormat(bus.arrival_time),
+             duration: bus.duration,
+             available_seats: bus.available_seats,
+             singleseats_available: bus.singleseats_available,
+             starting_fare: bus.starting_fare || bus.fare,
+             amenities: bus.amenities,
+             max_lower_column: bus.max_lower_column || bus.maxLowerColumns || bus.max_lower_columns || 12,
+             max_lower_row: bus.max_lower_row || bus.maxLowerRows || bus.max_lower_rows || 5,
+             max_upper_column: bus.max_upper_column || bus.maxUpperColumns || bus.max_upper_columns ||  12,
+             max_upper_row: bus.max_upper_row || bus.maxUpperRows || bus.max_upper_rows || 5,
           };
           
           console.log(`Inserting bus ${formattedBus.bus_id} with departure_time ${formattedBus.departure_time} and arrival_time ${formattedBus.arrival_time}`);
@@ -201,6 +218,20 @@ serve(async (req) => {
           }
           
           busCount++;
+        }
+          
+        if (thirdPartyBuses.length < pageSize) {
+          done = true;
+        } else {
+           page++;
+        }
+      }
+      
+      console.log(`✅ Total future-dated buses inserted or updated: ${busCount}`);
+    } catch (err) {
+      console.error("❌ Error during bus sync:", err.message);
+    }  
+           
           
           // Now get layouts for this bus
           try {
