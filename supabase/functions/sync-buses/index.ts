@@ -258,8 +258,9 @@ serve(async (req) => {
           
           // Now get layouts for this bus
           try {
+            const layoutTable = "bus_seats" || "bus_layout";
             const { data: thirdPartyLayout, error: layoutError } = await thirdPartyClient
-              .from("bus_seats")
+              .from(layoutTable)
               .select("*")
               .eq("bus_id", bus.bus_id);
               
@@ -277,9 +278,9 @@ serve(async (req) => {
                 }
                 
                 const formattedSeat = {
-                  seat_id: seat.seat_id || `SEAT-${formattedBus.bus_id}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
-                  operator_id: formattedBus.operator_id,
-                  operator_name: formattedBus.operator_name,
+                  seat_id: `SEAT-${formattedBus.bus_id}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
+                  operator_id: operators.operator_id,
+                  operator_name: operators.operator_name,
                   bus_id: formattedBus.bus_id,
                   route_id: formattedBus.route_id,
                   op_seat_id: seat.op_seat_id || seat.seat_id,
