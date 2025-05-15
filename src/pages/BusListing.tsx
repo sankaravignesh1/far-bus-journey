@@ -137,10 +137,10 @@ const BusListing = () => {
     if (filters.nonAc && bus.type.toLowerCase().includes('non-ac')') {
       return true;
     }
-    if (filters.sleeper && bus.category === 'Sleeper') {
+    if (filters.sleeper && bus.type.toLowerCase().includes('sleeper')') {
       return true;
     }
-    if (filters.seater && bus.category === 'Seater') {
+    if (filters.seater && bus.type.toLowerCase().includes('seater')) {
       return true;
     }
 
