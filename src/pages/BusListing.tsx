@@ -78,22 +78,22 @@ const BusListing = () => {
         }
         
         // Then fetch buses for this route and date
-        const busesData = await BusService.searchBuses(route.route_id, journeyDate);
+        const busesData = await BusService.searchBuses(fromCity, toCity, route.route_id, journeyDate);
         
         // Convert the API response to match our Bus type
         const formattedBuses: Bus[] = busesData.map((bus: any) => ({
           id: bus.bus_id,
           name: bus.operator_name,
-          type: bus.bus_type || 'AC',
-          category: bus.bus_category || 'Sleeper',
+          type: bus.bus_type,
+          category: bus.bus_category || null,
           departureTime: bus.departure_time ? bus.departure_time.substring(0, 5) : '00:00',
           arrivalTime: bus.arrival_time ? bus.arrival_time.substring(0, 5) : '00:00',
-          duration: bus.duration || '0h 0m',
-          availableSeats: bus.available_seats || 0,
-          singleSeats: bus.singleseats_available || 0,
-          fare: bus.starting_fare || 0,
+          duration: bus.duration,
+          availableSeats: bus.available_seats,
+          singleSeats: bus.singleseats_available,
+          fare: bus.starting_fare,
           amenities: bus.amenities ? (typeof bus.amenities === 'string' ? JSON.parse(bus.amenities) : bus.amenities) : [],
-          layout: bus.bus_category === 'Sleeper' ? '2+1' : 'all-seater', // Default layout based on category
+          layout: bus.bus_category 
         }));
         
         setBuses(formattedBuses);
