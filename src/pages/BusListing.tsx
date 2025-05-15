@@ -131,10 +131,10 @@ const BusListing = () => {
     }
 
     // Apply Bus Type filters
-    if (filters.ac && bus.type === 'AC') {
+    if (filters.ac && bus.type.toLowerCase().includes('ac') && !bus.type.toLowerCase().includes('non-ac')) {
       return true;
     }
-    if (filters.nonAc && bus.type === 'Non-AC') {
+    if (filters.nonAc && bus.type.toLowerCase().includes('non-ac')') {
       return true;
     }
     if (filters.sleeper && bus.category === 'Sleeper') {
