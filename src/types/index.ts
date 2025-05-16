@@ -1,4 +1,3 @@
-
 export interface City {
   id: string;
   name: string;
@@ -40,6 +39,7 @@ export interface Seat {
   original_price?: number;
   discounted_price?: number;
   seat_res_type?: string;
+  fare?: number; // Added fare property to Seat type
 }
 
 export interface BoardingPoint {

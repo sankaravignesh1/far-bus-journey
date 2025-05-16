@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Seat, BoardingPoint, DroppingPoint } from '../types';
@@ -101,7 +100,12 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
     navigate("/");
   };
   
-  const totalAmount = selectedSeats.reduce((sum, seat) => sum + (seat.fare ?? fare), 0);
+  // Calculate the total amount based on seat prices
+  const totalAmount = selectedSeats.reduce((sum, seat) => {
+    // First try to use the discounted price, then original price, then fallback to the base fare
+    const seatPrice = seat.discounted_price || seat.original_price || seat.fare || fare;
+    return sum + seatPrice;
+  }, 0);
 
   return (
     <div className="animate-fade-in">

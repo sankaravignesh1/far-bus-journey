@@ -68,7 +68,7 @@ const SeatSelectionPage = () => {
         return;
       }
       
-      // Prepare the bus object
+      // Prepare the bus object with proper layout type conversion
       const bus: Bus = {
         id: busDetails.bus_id,
         name: busDetails.operator_name,
@@ -81,7 +81,8 @@ const SeatSelectionPage = () => {
         singleSeats: busDetails.singleseats_available || 0,
         fare: busDetails.starting_fare,
         amenities: busDetails.amenities ? (typeof busDetails.amenities === 'string' ? JSON.parse(busDetails.amenities) : busDetails.amenities) : [],
-        layout: busDetails.bus_category || '2+1'
+        // Convert the layout string to one of the valid types
+        layout: convertToValidLayout(busDetails.bus_category || '2+1')
       };
       
       setCurrentBus(bus);
@@ -151,6 +152,32 @@ const SeatSelectionPage = () => {
       });
       setLoading(false);
     }
+  };
+  
+  // Helper function to convert any string to a valid layout type
+  const convertToValidLayout = (layout: string): "2+1" | "2+1-sleeper-seater" | "seater-sleeper" | "tilted-sleeper" | "all-seater" => {
+    const validLayouts: Array<"2+1" | "2+1-sleeper-seater" | "seater-sleeper" | "tilted-sleeper" | "all-seater"> = [
+      "2+1", "2+1-sleeper-seater", "seater-sleeper", "tilted-sleeper", "all-seater"
+    ];
+    
+    // Try to find an exact match
+    for (const valid of validLayouts) {
+      if (layout === valid) return valid;
+    }
+    
+    // If no exact match, try to find a partial match
+    if (layout.includes('sleeper') && layout.includes('seater')) {
+      return "seater-sleeper";
+    } else if (layout.includes('sleeper')) {
+      return "2+1-sleeper-seater";
+    } else if (layout.includes('seater')) {
+      return "all-seater";
+    } else if (layout.includes('tilt')) {
+      return "tilted-sleeper";
+    }
+    
+    // Default fallback
+    return "2+1";
   };
   
   const isAdjacentToFemaleBookedSeat = (seat: Seat): boolean => {
@@ -345,8 +372,8 @@ const SeatSelectionPage = () => {
               seats={availableSeats}
               selectedSeats={selectedSeats}
               onSelectSeat={handleSeatSelect}
-              busType={currentBus.category}
-              busLayout={currentBus.layout}
+              busType={currentBus?.category || ''}
+              busLayout={currentBus?.layout || '2+1'}
               maxLowerRow={maxLowerRow}
               maxLowerColumn={maxLowerColumn}
               maxUpperRow={maxUpperRow}
@@ -354,13 +381,13 @@ const SeatSelectionPage = () => {
             />
             
             {/* Amenities Section */}
-            {currentBus.amenities && currentBus.amenities.length > 0 && (
+            {currentBus && currentBus.amenities && currentBus.amenities.length > 0 && (
               <div className="card mt-6 p-4">
                 <h3 className="font-medium mb-3">Amenities</h3>
                 <div className="flex flex-wrap gap-2">
                   {currentBus.amenities.map((amenity, index) => (
                     <div key={index} className="px-2 py-1 bg-far-cream text-far-black/70 text-xs rounded">
-                      {amenity}
+                      {amenity.toString()}
                     </div>
                   ))}
                 </div>
@@ -498,7 +525,7 @@ const SeatSelectionPage = () => {
               droppingPoints={droppingPoints || []}
               busId={busId!}
               journeyDate={journeyDate}
-              fare={currentBus.fare}
+              fare={currentBus ? currentBus.fare : 0}
             />
           </div>
         )}
