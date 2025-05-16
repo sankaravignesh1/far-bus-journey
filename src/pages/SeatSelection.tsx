@@ -4,9 +4,23 @@ import SeatSelection from '../components/SeatSelection';
 import PassengerForm from '../components/PassengerForm';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Seat, Bus } from '../types';
-import { buses, boardingPoints, droppingPoints } from '../data/mockData';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Info, TicketCheck } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { 
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger
+} from '@/components/ui/accordion';
+import { format, addHours, addDays, parseISO } from 'date-fns';
+import { 
+  BusService, 
+  BoardingPointService, 
+  DroppingPointService,
+  SeatService,
+  CancellationPolicyService,
+  TravelPolicyService 
+} from '../services/api';
 
 const SeatSelectionPage = () => {
   const { busId } = useParams<{ busId: string }>();
@@ -21,368 +35,122 @@ const SeatSelectionPage = () => {
   const [currentBus, setCurrentBus] = useState<Bus | null>(null);
   const [showPassengerForm, setShowPassengerForm] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [boardingPoints, setBoardingPoints] = useState<any[]>([]);
+  const [droppingPoints, setDroppingPoints] = useState<any[]>([]);
+  const [cancellationPolicy, setCancellationPolicy] = useState<any>(null);
+  const [travelPolicies, setTravelPolicies] = useState<any[]>([]);
+  const [maxLowerRow, setMaxLowerRow] = useState(0);
+  const [maxLowerColumn, setMaxLowerColumn] = useState(0);
+  const [maxUpperRow, setMaxUpperRow] = useState(0);
+  const [maxUpperColumn, setMaxUpperColumn] = useState(0);
   
   useEffect(() => {
-    if (busId) {
-      const bus = buses.find(b => b.id === busId);
-      if (bus) {
-        setCurrentBus(bus);
-        const seats = generateSeatsForBusType(busId, bus.layout);
-        console.log("Generated seats:", seats);
-        setAvailableSeats(seats);
+    if (busId && journeyDate) {
+      fetchBusDetails();
+    }
+  }, [busId, journeyDate]);
+
+  const fetchBusDetails = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch bus details
+      const busDetails = await BusService.getBusDetails(busId!, journeyDate);
+      console.log('Bus details:', busDetails);
+      
+      if (!busDetails) {
+        toast({
+          title: "Error",
+          description: "Bus not found",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
       }
+      
+      // Prepare the bus object
+      const bus: Bus = {
+        id: busDetails.bus_id,
+        name: busDetails.operator_name,
+        type: busDetails.bus_type,
+        category: busDetails.bus_category || '',
+        departureTime: busDetails.departure_time ? busDetails.departure_time.substring(0, 5) : '00:00',
+        arrivalTime: busDetails.arrival_time ? busDetails.arrival_time.substring(0, 5) : '00:00',
+        duration: busDetails.duration || '',
+        availableSeats: busDetails.available_seats || 0,
+        singleSeats: busDetails.singleseats_available || 0,
+        fare: busDetails.starting_fare,
+        amenities: busDetails.amenities ? (typeof busDetails.amenities === 'string' ? JSON.parse(busDetails.amenities) : busDetails.amenities) : [],
+        layout: busDetails.bus_category || '2+1'
+      };
+      
+      setCurrentBus(bus);
+      
+      // Set max rows and columns
+      setMaxLowerRow(busDetails.max_lower_row || 0);
+      setMaxLowerColumn(busDetails.max_lower_column || 0);
+      setMaxUpperRow(busDetails.max_upper_row || 0);
+      setMaxUpperColumn(busDetails.max_upper_column || 0);
+
+      // Fetch seats layout
+      const seatsData = await SeatService.getBusLayout(busId!, journeyDate);
+      console.log('Seats data:', seatsData);
+      
+      if (seatsData && seatsData.length > 0) {
+        const formattedSeats: Seat[] = seatsData.map((seat: any) => ({
+          id: seat.seat_id,
+          number: seat.seat_name,
+          type: seat.seat_type || "Seater",
+          available: seat.available,
+          is_ladies_seat: seat.is_ladies_seat || false,
+          status: seat.available ? "available" : "booked",
+          position: (seat.width > 1 || seat.height > 1) ? "double" : "single",
+          deck: seat.deck || "lower",
+          x: seat.x_pos,
+          y: seat.y_pos,
+          z: seat.deck === 'upper' ? 1 : 0,
+          width: seat.width || 1,
+          height: seat.height || 1,
+          original_price: seat.original_price,
+          discounted_price: seat.discounted_price,
+          seat_res_type: seat.seat_res_type
+        }));
+        
+        setAvailableSeats(formattedSeats);
+      }
+      
+      // Fetch boarding points
+      const bpData = await BoardingPointService.getBoardingPoints(busId!);
+      console.log('Boarding points:', bpData);
+      setBoardingPoints(bpData || []);
+      
+      // Fetch dropping points
+      const dpData = await DroppingPointService.getDroppingPoints(busId!);
+      console.log('Dropping points:', dpData);
+      setDroppingPoints(dpData || []);
+      
+      // Fetch cancellation policy
+      if (busDetails.operator_id) {
+        const policyData = await CancellationPolicyService.getCancellationPolicy(busDetails.operator_id);
+        console.log('Cancellation policy:', policyData);
+        setCancellationPolicy(policyData || null);
+      }
+      
+      // Fetch travel policies
+      const travelPolicyData = await TravelPolicyService.getTravelPolicies();
+      console.log('Travel policies:', travelPolicyData);
+      setTravelPolicies(travelPolicyData || []);
+      
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching bus details:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load bus details. Please try again.",
+        variant: "destructive",
+      });
       setLoading(false);
     }
-  }, [busId]);
-  
-  const generateSeatsForBusType = (busId: string, busLayout: string): Seat[] => {
-    switch (busLayout) {
-      case "2+1-sleeper-seater":
-        return generateSleeperSeaterLayout(busId);
-      case "all-seater":
-        return generateAllSeaterLayout(busId);
-      case "seater-sleeper":
-        return generateSeaterSleeperLayout(busId);
-      default:
-        return generateEnhancedBusLayout(busId);
-    }
-  };
-  
-  const generateEnhancedBusLayout = (busId: string): Seat[] => {
-    const seats: Seat[] = [];
-    const rows = 5;
-    const seatsPerRow = 6;
-    
-    for (let row = 0; row < 2; row++) {
-      for (let col = 0; col < seatsPerRow; col++) {
-        const seatNumber = `L${(row * seatsPerRow + col + 1).toString().padStart(2, '0')}`;
-        
-        let status: 'available' | 'booked' | 'female_booked' = 'available';
-        const random = Math.random();
-        if (random < 0.15) {
-          status = 'booked';
-        } else if (random < 0.25) {
-          status = 'female_booked';
-        }
-        
-        seats.push({
-          id: `${busId}-${seatNumber}`,
-          number: seatNumber,
-          type: "Sleeper",
-          status: status,
-          position: col < seatsPerRow - 1 ? "double" : "single",
-          deck: "lower"
-        });
-      }
-    }
-    
-    for (let row = 3; row < 5; row++) {
-      for (let col = 0; col < seatsPerRow; col++) {
-        const seatNumber = `L${((row - 1) * seatsPerRow + col + 1).toString().padStart(2, '0')}`;
-        
-        let status: 'available' | 'booked' | 'female_booked' = 'available';
-        const random = Math.random();
-        if (random < 0.15) {
-          status = 'booked';
-        } else if (random < 0.25) {
-          status = 'female_booked';
-        }
-        
-        seats.push({
-          id: `${busId}-${seatNumber}`,
-          number: seatNumber,
-          type: "Sleeper",
-          status: status,
-          position: col < seatsPerRow - 1 ? "double" : "single",
-          deck: "lower"
-        });
-      }
-    }
-    
-    for (let row = 0; row < 2; row++) {
-      for (let col = 0; col < seatsPerRow; col++) {
-        const seatNumber = `U${(row * seatsPerRow + col + 1).toString().padStart(2, '0')}`;
-        
-        let status: 'available' | 'booked' | 'female_booked' = 'available';
-        const random = Math.random();
-        if (random < 0.15) {
-          status = 'booked';
-        } else if (random < 0.25) {
-          status = 'female_booked';
-        }
-        
-        seats.push({
-          id: `${busId}-${seatNumber}`,
-          number: seatNumber,
-          type: "Sleeper",
-          status: status,
-          position: col < seatsPerRow - 1 ? "double" : "single",
-          deck: "upper"
-        });
-      }
-    }
-    
-    for (let row = 3; row < 5; row++) {
-      for (let col = 0; col < seatsPerRow; col++) {
-        const seatNumber = `U${((row - 1) * seatsPerRow + col + 1).toString().padStart(2, '0')}`;
-        
-        let status: 'available' | 'booked' | 'female_booked' = 'available';
-        const random = Math.random();
-        if (random < 0.15) {
-          status = 'booked';
-        } else if (random < 0.25) {
-          status = 'female_booked';
-        }
-        
-        seats.push({
-          id: `${busId}-${seatNumber}`,
-          number: seatNumber,
-          type: "Sleeper",
-          status: status,
-          position: col < seatsPerRow - 1 ? "double" : "single",
-          deck: "upper"
-        });
-      }
-    }
-    
-    return seats;
-  };
-  
-  const generateTwoDeckSleeperSeats = (busId: string): Seat[] => {
-    const seats: Seat[] = [];
-    const rows = 3;
-    const cols = 6;
-    const totalSeatsPerDeck = rows * cols;
-    
-    for (let i = 1; i <= totalSeatsPerDeck; i++) {
-      const seatNumber = `L${i.toString().padStart(2, '0')}`;
-      
-      let status: 'available' | 'booked' | 'female_booked' = 'available';
-      const random = Math.random();
-      if (random < 0.2) {
-        status = 'booked';
-      } else if (random < 0.3) {
-        status = 'female_booked';
-      }
-      
-      seats.push({
-        id: `${busId}-${seatNumber}`,
-        number: seatNumber,
-        type: "Sleeper",
-        status: status,
-        position: "double",
-        deck: "lower"
-      });
-    }
-    
-    for (let i = 1; i <= totalSeatsPerDeck; i++) {
-      const seatNumber = `U${i.toString().padStart(2, '0')}`;
-      
-      let status: 'available' | 'booked' | 'female_booked' = 'available';
-      const random = Math.random();
-      if (random < 0.2) {
-        status = 'booked';
-      } else if (random < 0.3) {
-        status = 'female_booked';
-      }
-      
-      seats.push({
-        id: `${busId}-${seatNumber}`,
-        number: seatNumber,
-        type: "Sleeper",
-        status: status,
-        position: "double",
-        deck: "upper"
-      });
-    }
-    
-    return seats;
-  };
-  
-  const generateSleeperSeaterLayout = (busId: string): Seat[] => {
-    const seats: Seat[] = [];
-    
-    for (let i = 1; i <= 12; i++) {
-      const seatNumber = `L${i.toString().padStart(2, '0')}`;
-      
-      let status: 'available' | 'booked' | 'female_booked' = 'available';
-      const random = Math.random();
-      if (random < 0.2) {
-        status = 'booked';
-      } else if (random < 0.3) {
-        status = 'female_booked';
-      }
-      
-      seats.push({
-        id: `${busId}-${seatNumber}`,
-        number: seatNumber,
-        type: "Sleeper",
-        status: status,
-        position: "double",
-        deck: "lower"
-      });
-    }
-    
-    for (let i = 13; i <= 24; i++) {
-      const seatNumber = `L${i.toString().padStart(2, '0')}`;
-      
-      let status: 'available' | 'booked' | 'female_booked' = 'available';
-      const random = Math.random();
-      if (random < 0.2) {
-        status = 'booked';
-      } else if (random < 0.3) {
-        status = 'female_booked';
-      }
-      
-      seats.push({
-        id: `${busId}-${seatNumber}`,
-        number: seatNumber,
-        type: "Seater",
-        status: status,
-        position: "single",
-        deck: "lower"
-      });
-    }
-    
-    for (let i = 1; i <= 18; i++) {
-      const seatNumber = `U${i.toString().padStart(2, '0')}`;
-      
-      let status: 'available' | 'booked' | 'female_booked' = 'available';
-      const random = Math.random();
-      if (random < 0.2) {
-        status = 'booked';
-      } else if (random < 0.3) {
-        status = 'female_booked';
-      }
-      
-      seats.push({
-        id: `${busId}-${seatNumber}`,
-        number: seatNumber,
-        type: "Sleeper",
-        status: status,
-        position: "double",
-        deck: "upper"
-      });
-    }
-    
-    return seats;
-  };
-  
-  const generateAllSeaterLayout = (busId: string): Seat[] => {
-    const seats: Seat[] = [];
-    
-    for (let i = 1; i <= 36; i++) {
-      const seatNumber = `L${i.toString().padStart(2, '0')}`;
-      
-      let status: 'available' | 'booked' | 'female_booked' = 'available';
-      const random = Math.random();
-      if (random < 0.2) {
-        status = 'booked';
-      } else if (random < 0.3) {
-        status = 'female_booked';
-      }
-      
-      seats.push({
-        id: `${busId}-${seatNumber}`,
-        number: seatNumber,
-        type: "Seater",
-        status: status,
-        position: "single",
-        deck: "lower"
-      });
-    }
-    
-    for (let i = 1; i <= 18; i++) {
-      const seatNumber = `U${i.toString().padStart(2, '0')}`;
-      
-      let status: 'available' | 'booked' | 'female_booked' = 'available';
-      const random = Math.random();
-      if (random < 0.2) {
-        status = 'booked';
-      } else if (random < 0.3) {
-        status = 'female_booked';
-      }
-      
-      seats.push({
-        id: `${busId}-${seatNumber}`,
-        number: seatNumber,
-        type: "Sleeper",
-        status: status,
-        position: "double",
-        deck: "upper"
-      });
-    }
-    
-    return seats;
-  };
-  
-  const generateSeaterSleeperLayout = (busId: string): Seat[] => {
-    const seats: Seat[] = [];
-    
-    for (let i = 1; i <= 24; i++) {
-      const seatNumber = `L${i.toString().padStart(2, '0')}`;
-      
-      let status: 'available' | 'booked' | 'female_booked' = 'available';
-      const random = Math.random();
-      if (random < 0.2) {
-        status = 'booked';
-      } else if (random < 0.3) {
-        status = 'female_booked';
-      }
-      
-      seats.push({
-        id: `${busId}-${seatNumber}`,
-        number: seatNumber,
-        type: "Seater",
-        status: status,
-        position: "single",
-        deck: "lower"
-      });
-    }
-    
-    for (let i = 25; i <= 30; i++) {
-      const seatNumber = `L${i.toString().padStart(2, '0')}`;
-      
-      let status: 'available' | 'booked' | 'female_booked' = 'available';
-      const random = Math.random();
-      if (random < 0.2) {
-        status = 'booked';
-      } else if (random < 0.3) {
-        status = 'female_booked';
-      }
-      
-      seats.push({
-        id: `${busId}-${seatNumber}`,
-        number: seatNumber,
-        type: "Sleeper",
-        status: status,
-        position: "double",
-        deck: "lower"
-      });
-    }
-    
-    for (let i = 1; i <= 18; i++) {
-      const seatNumber = `U${i.toString().padStart(2, '0')}`;
-      
-      let status: 'available' | 'booked' | 'female_booked' = 'available';
-      const random = Math.random();
-      if (random < 0.2) {
-        status = 'booked';
-      } else if (random < 0.3) {
-        status = 'female_booked';
-      }
-      
-      seats.push({
-        id: `${busId}-${seatNumber}`,
-        number: seatNumber,
-        type: "Sleeper",
-        status: status,
-        position: "double",
-        deck: "upper"
-      });
-    }
-    
-    return seats;
   };
   
   const isAdjacentToFemaleBookedSeat = (seat: Seat): boolean => {
@@ -455,15 +223,12 @@ const SeatSelectionPage = () => {
     if (selectedSeats.some(s => s.id === seat.id)) {
       setSelectedSeats(prev => prev.filter(s => s.id !== seat.id));
     } else if (selectedSeats.length < 6) {
-      if (isAdjacentToFemaleBookedSeat(seat)) {
-        toast({
-          title: "Seating Restriction",
-          description: "This seat can only be booked by a female passenger due to female passengers in the same column.",
-          variant: "default",
-        });
-        
+      if (seat.is_ladies_seat || seat.seat_res_type === 'Reserved_for_female') {
         const femaleRequiredSeat = { ...seat, requiresFemale: true };
         setSelectedSeats(prev => [...prev, femaleRequiredSeat]);
+      } else if (seat.seat_res_type === 'Reserved_for_male') {
+        const maleRequiredSeat = { ...seat, requiresMale: true };
+        setSelectedSeats(prev => [...prev, seat]);
       } else {
         setSelectedSeats(prev => [...prev, seat]);
       }
@@ -486,6 +251,39 @@ const SeatSelectionPage = () => {
       return;
     }
     setShowPassengerForm(true);
+  };
+
+  // Format cancellation policy times based on journey date and departure time
+  const formatCancellationPolicyTime = (columnName: string) => {
+    if (!currentBus || !journeyDate) return '';
+    
+    const departureDateTime = `${journeyDate}T${currentBus.departureTime}:00`;
+    let date;
+    
+    try {
+      date = parseISO(departureDateTime);
+    } catch (error) {
+      console.error('Error parsing date:', error);
+      return 'Invalid date';
+    }
+    
+    if (columnName === 'before_two_weeks') {
+      return `Before ${format(addDays(date, -14), 'MMM d, h:mm a')}`;
+    } else if (columnName === 'before_week') {
+      return `Between ${format(addDays(date, -14), 'MMM d, h:mm a')} and ${format(addDays(date, -7), 'MMM d, h:mm a')}`;
+    } else if (columnName === 'before_48hrs') {
+      return `Between ${format(addDays(date, -7), 'MMM d, h:mm a')} and ${format(addHours(date, -48), 'MMM d, h:mm a')}`;
+    } else if (columnName === 'before_24hrs') {
+      return `Between ${format(addHours(date, -48), 'MMM d, h:mm a')} and ${format(addHours(date, -24), 'MMM d, h:mm a')}`;
+    } else if (columnName === 'before_12hrs') {
+      return `Between ${format(addHours(date, -24), 'MMM d, h:mm a')} and ${format(addHours(date, -12), 'MMM d, h:mm a')}`;
+    } else if (columnName === 'before_6hrs') {
+      return `Between ${format(addHours(date, -12), 'MMM d, h:mm a')} and ${format(addHours(date, -6), 'MMM d, h:mm a')}`;
+    } else if (columnName === 'lessthan_6hrs') {
+      return `Less than ${format(addHours(date, -6), 'MMM d, h:mm a')}`;
+    }
+    
+    return columnName;
   };
   
   if (loading) {
@@ -549,14 +347,137 @@ const SeatSelectionPage = () => {
               onSelectSeat={handleSeatSelect}
               busType={currentBus.category}
               busLayout={currentBus.layout}
+              maxLowerRow={maxLowerRow}
+              maxLowerColumn={maxLowerColumn}
+              maxUpperRow={maxUpperRow}
+              maxUpperColumn={maxUpperColumn}
             />
+            
+            {/* Amenities Section */}
+            {currentBus.amenities && currentBus.amenities.length > 0 && (
+              <div className="card mt-6 p-4">
+                <h3 className="font-medium mb-3">Amenities</h3>
+                <div className="flex flex-wrap gap-2">
+                  {currentBus.amenities.map((amenity, index) => (
+                    <div key={index} className="px-2 py-1 bg-far-cream text-far-black/70 text-xs rounded">
+                      {amenity}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Boarding and Dropping Points */}
+            <div className="mt-6 space-y-4">
+              <Accordion type="single" collapsible className="bg-white border rounded-md">
+                <AccordionItem value="boarding-points">
+                  <AccordionTrigger className="px-4 py-3 hover:bg-far-cream/20">
+                    <span className="text-sm font-medium">View Boarding Points</span>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4">
+                    <div className="space-y-3">
+                      {boardingPoints.length > 0 ? (
+                        boardingPoints.map((bp, index) => (
+                          <div key={index} className="border-b pb-2 last:border-0">
+                            <div className="font-medium">{bp.b_point_name}</div>
+                            {bp.b_address && <div className="text-sm text-gray-600">{bp.b_address}</div>}
+                            {bp.b_landmark && <div className="text-sm text-gray-600">Landmark: {bp.b_landmark}</div>}
+                            <div className="text-sm font-medium mt-1">
+                              Boarding Time: {bp.b_time ? bp.b_time.substring(0, 5) : 'N/A'}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm">No boarding points information available</p>
+                      )}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+              
+              <Accordion type="single" collapsible className="bg-white border rounded-md">
+                <AccordionItem value="dropping-points">
+                  <AccordionTrigger className="px-4 py-3 hover:bg-far-cream/20">
+                    <span className="text-sm font-medium">View Dropping Points</span>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4">
+                    <div className="space-y-3">
+                      {droppingPoints.length > 0 ? (
+                        droppingPoints.map((dp, index) => (
+                          <div key={index} className="border-b pb-2 last:border-0">
+                            <div className="font-medium">{dp.d_point_name}</div>
+                            {dp.d_address && <div className="text-sm text-gray-600">{dp.d_address}</div>}
+                            {dp.d_landmark && <div className="text-sm text-gray-600">Landmark: {dp.d_landmark}</div>}
+                            <div className="text-sm font-medium mt-1">
+                              Dropping Time: {dp.d_time ? dp.d_time.substring(0, 5) : 'N/A'}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm">No dropping points information available</p>
+                      )}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+              
+              {/* Cancellation Policy */}
+              <Accordion type="single" collapsible className="bg-white border rounded-md">
+                <AccordionItem value="cancellation-policy">
+                  <AccordionTrigger className="px-4 py-3 hover:bg-far-cream/20">
+                    <span className="text-sm font-medium">Cancellation Policy</span>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4">
+                    {cancellationPolicy ? (
+                      <div className="space-y-2">
+                        {Object.entries(cancellationPolicy)
+                          .filter(([key]) => !['id', 'created_at', 'updated_at', 'operator_id', 'operator_name'].includes(key))
+                          .map(([key, value]) => (
+                            <div key={key} className="flex justify-between text-sm py-1 border-b last:border-0">
+                              <span>{formatCancellationPolicyTime(key)}</span>
+                              <span className="font-medium">{value}% refund</span>
+                            </div>
+                          ))
+                        }
+                      </div>
+                    ) : (
+                      <div className="flex items-center text-amber-600">
+                        <Info size={16} className="mr-2" />
+                        <p>Cancellation policy not available for this operator.</p>
+                      </div>
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+              
+              {/* Travel Policy */}
+              <Accordion type="single" collapsible className="bg-white border rounded-md">
+                <AccordionItem value="travel-policy">
+                  <AccordionTrigger className="px-4 py-3 hover:bg-far-cream/20">
+                    <span className="text-sm font-medium">Travel Policy</span>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4">
+                    {travelPolicies.length > 0 ? (
+                      <ul className="list-disc pl-5 space-y-1">
+                        {travelPolicies.map((policy, index) => (
+                          <li key={index} className="text-sm">{policy.policy_text}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm">No travel policies available</p>
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
             
             {selectedSeats.length > 0 && (
               <div className="bg-white border border-far-lightgray mt-6 p-4 rounded-lg shadow-sm">
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center">
                   <div className="mb-4 md:mb-0">
                     <p className="font-medium">Selected Seats: {selectedSeats.map(s => s.number).join(', ')}</p>
-                    <p className="text-sm text-far-black/70">Total Fare: ₹{currentBus.fare * selectedSeats.length}</p>
+                    <p className="text-sm text-far-black/70">Total Fare: ₹{selectedSeats.reduce((total, seat) => 
+                      total + (seat.discounted_price || seat.original_price || currentBus.fare), 0)}</p>
                   </div>
                   <button 
                     className="btn-primary flex items-center justify-center w-full md:w-auto"
@@ -573,8 +494,8 @@ const SeatSelectionPage = () => {
           <div>
             <PassengerForm
               selectedSeats={selectedSeats}
-              boardingPoints={boardingPoints[busId!] || []}
-              droppingPoints={droppingPoints[busId!] || []}
+              boardingPoints={boardingPoints || []}
+              droppingPoints={droppingPoints || []}
               busId={busId!}
               journeyDate={journeyDate}
               fare={currentBus.fare}

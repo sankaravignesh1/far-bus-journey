@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Seat } from '../types';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -40,9 +40,12 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
 
   const getSeatStatus = (seat: Seat) => {
     if (selectedSeats.some(s => s.id === seat.id)) return 'selected';
-    if (seat.available) return 'available';
     if (!seat.available && seat.is_ladies_seat) return 'female_booked';
-    return 'booked';
+    if (!seat.available) return 'booked';
+    if (seat.available && seat.is_ladies_seat) return 'female_available';
+    if (seat.available && seat.seat_res_type === 'Reserved_for_male') return 'male_reserved';
+    if (seat.available && seat.seat_res_type === 'Reserved_for_female') return 'female_reserved';
+    return 'available';
   };
 
   const getSeatStyle = (seat: Seat) => {
@@ -53,14 +56,19 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
     if (status === 'available') style += ' bg-white border border-gray-300 hover:border-far-green';
     else if (status === 'booked') style += ' bg-far-gray text-white cursor-not-allowed';
     else if (status === 'female_booked') style += ' bg-pink-200 border-pink-300 text-pink-800 cursor-not-allowed';
+    else if (status === 'female_available') style += ' bg-white border border-pink-300 hover:border-pink-500';
+    else if (status === 'male_reserved') style += ' bg-white border border-blue-300 hover:border-blue-500';
+    else if (status === 'female_reserved') style += ' bg-white border border-pink-300 hover:border-pink-500';
     else if (status === 'selected') style += ' bg-far-green text-white border-far-green';
 
     return style;
   };
 
-  const renderGrid = (deck: 'lower' | 'upper', rows: number, cols: number) => {
+  const renderGrid = (deck: 'lower' | 'upper') => {
+    const maxRow = deck === 'lower' ? maxLowerRow : maxUpperRow;
+    const maxCol = deck === 'lower' ? maxLowerColumn : maxUpperColumn;
     const filteredSeats = seats.filter(s => s.deck === deck);
-
+    
     return (
       <div className="relative border rounded-md p-4 mb-8">
         <div className="flex justify-between items-center mb-3 px-2">
@@ -72,28 +80,86 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
         <ScrollArea className="w-full overflow-auto">
           <div style={{ 
             position: 'relative', 
-            width: cols * (seatSize + seatGap), 
-            height: rows * (seatSize + seatGap) 
+            width: maxCol * (seatSize + seatGap), 
+            height: maxRow * (seatSize + seatGap),
+            border: '1px solid #eee',
+            background: 'rgba(0,0,0,0.02)'
           }}>
-            {filteredSeats.map(seat => (
-              <div
-                key={seat.id}
-                className={getSeatStyle(seat)}
-                onClick={() => {
-                  if (seat.status === 'available') onSelectSeat(seat);
-                }}
-                style={{
-                  top: seat.x * (seatSize + seatGap),
-                  left: seat.y * (seatSize + seatGap),
-                  height: seat.height * seatSize + (seat.height - 1) * seatGap,
-                  width: seat.width * seatSize + (seat.width - 1) * seatGap,
-                }}
-              >
-                {seat.number}
-              </div>
-            ))}
+            {filteredSeats.map(seat => {
+              // Calculate position based on x, y coordinates
+              const positionStyle = {
+                top: seat.y * (seatSize + seatGap),
+                left: seat.x * (seatSize + seatGap),
+                height: seat.height * seatSize + (seat.height - 1) * seatGap,
+                width: seat.width * seatSize + (seat.width - 1) * seatGap,
+              };
+              
+              const seatStatus = getSeatStatus(seat);
+              const isSelectable = seatStatus === 'available' || 
+                                  seatStatus === 'female_available' || 
+                                  seatStatus === 'male_reserved' || 
+                                  seatStatus === 'female_reserved';
+              
+              return (
+                <div
+                  key={seat.id}
+                  className={getSeatStyle(seat)}
+                  onClick={() => {
+                    if (isSelectable) {
+                      if (seat.is_ladies_seat) {
+                        toast({
+                          title: "Female Only Seat",
+                          description: "This seat can only be booked for a female passenger.",
+                          variant: "default",
+                        });
+                      } else if (seat.seat_res_type === 'Reserved_for_male') {
+                        toast({
+                          title: "Male Only Seat",
+                          description: "This seat can only be booked for a male passenger.",
+                          variant: "default",
+                        });
+                      } else if (seat.seat_res_type === 'Reserved_for_female') {
+                        toast({
+                          title: "Female Only Seat",
+                          description: "This seat can only be booked for a female passenger.",
+                          variant: "default",
+                        });
+                      }
+                      onSelectSeat(seat);
+                    }
+                  }}
+                  style={positionStyle}
+                >
+                  <span>{seat.number}</span>
+                  {(seat.discounted_price && seat.original_price > seat.discounted_price) && (
+                    <span className="absolute -bottom-4 text-[10px] font-normal">
+                      <span className="line-through text-gray-400">₹{seat.original_price}</span>
+                      <span className="text-far-green ml-1">₹{seat.discounted_price}</span>
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </ScrollArea>
+        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-white border border-gray-300 mr-2"></div>
+            <span className="text-xs">Available</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-far-green mr-2"></div>
+            <span className="text-xs">Selected</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-far-gray mr-2"></div>
+            <span className="text-xs">Booked</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-pink-200 border border-pink-300 mr-2"></div>
+            <span className="text-xs">Ladies</span>
+          </div>
+        </div>
       </div>
     );
   };
@@ -102,8 +168,19 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
 
   return (
     <div className="space-y-4">
-      {renderGrid('lower', maxLowerRow, maxLowerColumn)}
-      {renderGrid('upper', maxUpperRow, maxUpperColumn)}
+      {maxLowerRow > 0 && maxLowerColumn > 0 && (
+        <div>
+          <h3 className="font-medium mb-2">Lower Deck</h3>
+          {renderGrid('lower')}
+        </div>
+      )}
+      
+      {maxUpperRow > 0 && maxUpperColumn > 0 && (
+        <div>
+          <h3 className="font-medium mb-2">Upper Deck</h3>
+          {renderGrid('upper')}
+        </div>
+      )}
     </div>
   );
 };

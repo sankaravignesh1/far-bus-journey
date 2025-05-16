@@ -27,6 +27,19 @@ export interface Seat {
   position: "single" | "double" | "tilted"; // Updated to handle different position types
   deck: "lower" | "upper";
   gender?: "male" | "female";
+  // Additional properties
+  available?: boolean;
+  is_ladies_seat?: boolean;
+  requiresFemale?: boolean;
+  requiresMale?: boolean;
+  x?: number;
+  y?: number;
+  z?: number;
+  width?: number;
+  height?: number;
+  original_price?: number;
+  discounted_price?: number;
+  seat_res_type?: string;
 }
 
 export interface BoardingPoint {

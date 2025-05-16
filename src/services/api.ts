@@ -57,7 +57,7 @@ export const RouteService = {
 
 // Bus Service
 export const BusService = {
-  async searchBuses(routeId: string, journeyDate: string, fromCity: string, toCity: string) {
+  async searchBuses(fromCity: string, toCity: string, routeId: string, journeyDate: string) {
     const { data, error } = await supabase
       .from('bus_list')
       .select(`
@@ -65,8 +65,8 @@ export const BusService = {
         routes(*)
       `)
       .eq('route_id', routeId)
-      .eq('from_city', fromCity);
-      .eq('to_city', toCity); 
+      .eq('from_city', fromCity)
+      .eq('to_city', toCity)
       .eq('journey_date', journeyDate);
       
     if (error) {
@@ -167,7 +167,6 @@ export const BoardingPointService = {
       .from('boarding_points')
       .select('*')
       .eq('bus_id', busId)
-      .eq('route_id', routeId)
       .order('b_time', { ascending: true });
       
     if (error) {
@@ -177,10 +176,9 @@ export const BoardingPointService = {
     
     console.log(`Found ${data?.length || 0} boarding points for bus ${busId}`);
     return data || [];
-  },
-  
+  }
+};
  
-
 // DroppingPoint Service
 export const DroppingPointService = {
   async getDroppingPoints(busId: string) {
@@ -189,7 +187,6 @@ export const DroppingPointService = {
       .from('dropping_points')
       .select('*')
       .eq('bus_id', busId)
-      .eq('route_id', routeId)
       .order('d_time', { ascending: true });
       
     if (error) {
@@ -199,9 +196,8 @@ export const DroppingPointService = {
     
     console.log(`Found ${data?.length || 0} dropping points for bus ${busId}`);
     return data || [];
-  },
-  
- 
+  }
+};
 
 // CancellationPolicy Service
 export const CancellationPolicyService = {
@@ -214,7 +210,7 @@ export const CancellationPolicyService = {
       
     if (error) {
       console.error('Error fetching cancellation policy:', error);
-      throw new Error(error.message);
+      return null;
     }
     
     return data;
@@ -329,20 +325,22 @@ export const BookingService = {
 
 // Coupon Service
 export const CouponService = {
-  async getCoupons(fromCityId: string, fromCity: string) {
-    const { data, error } = await supabase.functions.invoke('fetch-coupons', {
-      body: { fromCityId, fromCity }
-    });
-    
+  async getCoupons(fromCityId: string) {
+    const { data, error } = await supabase
+      .from('coupons')
+      .select('*')
+      .eq('from_city_id', fromCityId)
+      .gte('valid_to', new Date().toISOString().split('T')[0]);
+      
     if (error) {
       console.error('Error fetching coupons:', error);
       throw new Error(error.message);
     }
     
-    return data?.coupons || [];
+    return data || [];
   },
   
-  async validateCoupon(code: string, fare: number) {
+  async validateCoupon(code: string, fare: number, fromCityId: string) {
     const { data, error } = await supabase
       .from('coupons')
       .select('*')
@@ -356,7 +354,6 @@ export const CouponService = {
       return { valid: false, message: 'Invalid coupon code' };
     }
     
-
     const finalDiscount = (fare * data.discount / 100);
     
     return {
@@ -367,7 +364,6 @@ export const CouponService = {
     };
   }
 };
-
 
 // Database Initialization Service - to seed the database with real data
 export const InitDatabaseService = {
