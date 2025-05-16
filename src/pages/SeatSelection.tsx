@@ -387,7 +387,7 @@ const SeatSelectionPage = () => {
                 <div className="flex flex-wrap gap-2">
                   {currentBus.amenities.map((amenity, index) => (
                     <div key={index} className="px-2 py-1 bg-far-cream text-far-black/70 text-xs rounded">
-                      {amenity.toString()}
+                      {String(amenity)}
                     </div>
                   ))}
                 </div>
@@ -462,7 +462,7 @@ const SeatSelectionPage = () => {
                           .map(([key, value]) => (
                             <div key={key} className="flex justify-between text-sm py-1 border-b last:border-0">
                               <span>{formatCancellationPolicyTime(key)}</span>
-                              <span className="font-medium">{value}% refund</span>
+                              <span className="font-medium">{String(value)}% refund</span>
                             </div>
                           ))
                         }
