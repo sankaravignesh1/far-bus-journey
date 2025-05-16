@@ -134,10 +134,10 @@ const BusListing = () => {
     if (filters.ac && bus.type.toLowerCase().includes('ac') && !bus.type.toLowerCase().includes('non-ac')) {
       return true;
     }
-    if (filters.nonAc && bus.type.toLowerCase().includes('non-ac')') {
+    if (filters.nonAc && bus.type.toLowerCase().includes('non-ac')) {
       return true;
     }
-    if (filters.sleeper && bus.type.toLowerCase().includes('sleeper')') {
+    if (filters.sleeper && bus.type.toLowerCase().includes('sleeper')) {
       return true;
     }
     if (filters.seater && bus.type.toLowerCase().includes('seater')) {
