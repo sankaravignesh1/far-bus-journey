@@ -40,7 +40,9 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
 
   const getSeatStatus = (seat: Seat) => {
     if (selectedSeats.some(s => s.id === seat.id)) return 'selected';
-    return seat.status;
+    if (seat.available) return 'available';
+    if (!seat.available && seat.is_ladies_seat) return 'female_booked';
+    return 'booked';
   };
 
   const getSeatStyle = (seat: Seat) => {
