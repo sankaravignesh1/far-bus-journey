@@ -2,7 +2,12 @@
 project_id = "ndcvvnssrranofnxfcdy"
 
 [functions.sync-cities]
+enabled = true
 verify_jwt = false
+import_map = "./functions/svg-to-jpg/deno.json"
+entrypoint = "./functions/svg-to-jpg/index.ts"
+static_files=["./functions/svg-to-jpg/magick.wasm"]
+
 
 [functions.sync-operators]
 verify_jwt = false
