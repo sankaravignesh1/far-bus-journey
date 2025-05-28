@@ -96,25 +96,6 @@ export const BusService = {
     return data;
   },
 
-  // Method to subscribe to realtime bus updates
-  subscribeToRealtimeBusUpdates(callback: (payload: any) => void) {
-    const channel = supabase.channel('public:bus_list')
-      .on('postgres_changes', { 
-        event: 'UPDATE', 
-        schema: 'public', 
-        table: 'bus_list' 
-      }, payload => {
-        callback(payload);
-      })
-      .subscribe((status) => {
-        console.log('Bus realtime subscription status:', status);
-      });
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }
-};
 
 // Seat Service
 export const SeatService = {
@@ -135,29 +116,6 @@ export const SeatService = {
     return data || [];
   },
 
-  // Method to subscribe to realtime seat updates
-  subscribeToRealtimeSeatUpdates(busId: string, callback: (payload: any) => void) {
-    console.log(`Setting up realtime subscription for bus ${busId} seats`);
-    const channel = supabase.channel('public:bus_layout')
-      .on('postgres_changes', { 
-        event: 'UPDATE', 
-        schema: 'public', 
-        table: 'bus_layout',
-        filter: `bus_id=eq.${busId}` 
-      }, payload => {
-        console.log('Received seat update:', payload);
-        callback(payload);
-      })
-      .subscribe((status) => {
-        console.log('Seat realtime subscription status:', status);
-      });
-
-    return () => {
-      console.log(`Removing realtime subscription for bus ${busId} seats`);
-      supabase.removeChannel(channel);
-    };
-  }
-};
 
 // BoardingPoint Service
 export const BoardingPointService = {
@@ -167,6 +125,7 @@ export const BoardingPointService = {
       .from('boarding_points')
       .select('*')
       .eq('bus_id', busId)
+      .eq('route_id', routeId)
       .order('b_time', { ascending: true });
       
     if (error) {
@@ -187,6 +146,7 @@ export const DroppingPointService = {
       .from('dropping_points')
       .select('*')
       .eq('bus_id', busId)
+      .eq('route_id', routeId)
       .order('d_time', { ascending: true });
       
     if (error) {
@@ -365,25 +325,3 @@ export const CouponService = {
   }
 };
 
-// Database Initialization Service - to seed the database with real data
-export const InitDatabaseService = {
-  async initializeDatabase() {
-    try {
-      console.log('Initializing database...');
-      const { data, error } = await supabase.functions.invoke('init-database', {
-        body: {}
-      });
-      
-      if (error) {
-        console.error('Error initializing database:', error);
-        throw new Error(error.message);
-      }
-      
-      console.log('Database initialization complete!', data);
-      return data;
-    } catch (error) {
-      console.error('Error initializing database:', error);
-      throw error;
-    }
-  }
-};
