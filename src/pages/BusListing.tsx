@@ -85,7 +85,7 @@ const BusListing = () => {
           id: bus.bus_id,
           name: bus.operator_name,
           type: bus.bus_type,
-          category: bus.bus_category || null,
+          
           departureTime: bus.departure_time ? bus.departure_time.substring(0, 5) : '00:00',
           arrivalTime: bus.arrival_time ? bus.arrival_time.substring(0, 5) : '00:00',
           duration: bus.duration,
@@ -93,7 +93,7 @@ const BusListing = () => {
           singleSeats: bus.singleseats_available,
           fare: bus.starting_fare,
           amenities: bus.amenities ? (typeof bus.amenities === 'string' ? JSON.parse(bus.amenities) : bus.amenities) : [],
-          layout: bus.bus_category 
+          
         }));
         
         setBuses(formattedBuses);
