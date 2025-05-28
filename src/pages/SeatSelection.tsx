@@ -231,10 +231,10 @@ const SeatSelectionPage = () => {
     if (selectedSeats.some(s => s.id === seat.id)) {
       setSelectedSeats(prev => prev.filter(s => s.id !== seat.id));
     } else if (selectedSeats.length < 6) {
-      if (seat.is_ladies_seat || seat.seat_res_type === 'Reserved_for_female') {
+      if (seat.available && seat.seat_res_type === 'Reserved_for_female') {
         const femaleRequiredSeat = { ...seat, requiresFemale: true };
         setSelectedSeats(prev => [...prev, femaleRequiredSeat]);
-      } else if (seat.seat_res_type === 'Reserved_for_male') {
+      } else if (seat.available && seat.seat_res_type === 'Reserved_for_male') {
         const maleRequiredSeat = { ...seat, requiresMale: true };
         setSelectedSeats(prev => [...prev, seat]);
       } else {
