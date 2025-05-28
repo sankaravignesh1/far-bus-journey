@@ -82,16 +82,16 @@ const SeatSelectionPage = () => {
         fare: busDetails.starting_fare,
         amenities: busDetails.amenities ? (typeof busDetails.amenities === 'string' ? JSON.parse(busDetails.amenities) : busDetails.amenities) : [],
         // Convert the layout string to one of the valid types
-        layout: convertToValidLayout(busDetails.bus_category || '2+1')
+        
       };
       
       setCurrentBus(bus);
       
       // Set max rows and columns
-      setMaxLowerRow(busDetails.max_lower_row || 0);
-      setMaxLowerColumn(busDetails.max_lower_column || 0);
-      setMaxUpperRow(busDetails.max_upper_row || 0);
-      setMaxUpperColumn(busDetails.max_upper_column || 0);
+      setMaxLowerRow(busDetails.max_lower_row || 5);
+      setMaxLowerColumn(busDetails.max_lower_column || 12);
+      setMaxUpperRow(busDetails.max_upper_row || 5);
+      setMaxUpperColumn(busDetails.max_upper_column || 12);
 
       // Fetch seats layout
       const seatsData = await SeatService.getBusLayout(busId!, journeyDate);
@@ -101,17 +101,17 @@ const SeatSelectionPage = () => {
         const formattedSeats: Seat[] = seatsData.map((seat: any) => ({
           id: seat.seat_id,
           number: seat.seat_name,
-          type: seat.seat_type || "Seater",
+          type: seat.seat_type,
           available: seat.available,
           is_ladies_seat: seat.is_ladies_seat || false,
-          status: seat.available ? "available" : "booked",
-          position: (seat.width > 1 || seat.height > 1) ? "double" : "single",
+          is_double_berth: seat.is_double_berth || false, 
+          
           deck: seat.deck || "lower",
-          x: seat.x_pos,
-          y: seat.y_pos,
-          z: seat.deck === 'upper' ? 1 : 0,
-          width: seat.width || 1,
-          height: seat.height || 1,
+          x: seat.x,
+          y: seat.y,
+          z: seat.z,
+          width: seat.width,
+          height: seat.height,
           original_price: seat.original_price,
           discounted_price: seat.discounted_price,
           seat_res_type: seat.seat_res_type
@@ -119,7 +119,9 @@ const SeatSelectionPage = () => {
         
         setAvailableSeats(formattedSeats);
       }
-      
+
+
+
       // Fetch boarding points
       const bpData = await BoardingPointService.getBoardingPoints(busId!);
       console.log('Boarding points:', bpData);
@@ -154,31 +156,10 @@ const SeatSelectionPage = () => {
     }
   };
   
-  // Helper function to convert any string to a valid layout type
-  const convertToValidLayout = (layout: string): "2+1" | "2+1-sleeper-seater" | "seater-sleeper" | "tilted-sleeper" | "all-seater" => {
-    const validLayouts: Array<"2+1" | "2+1-sleeper-seater" | "seater-sleeper" | "tilted-sleeper" | "all-seater"> = [
-      "2+1", "2+1-sleeper-seater", "seater-sleeper", "tilted-sleeper", "all-seater"
-    ];
-    
-    // Try to find an exact match
-    for (const valid of validLayouts) {
-      if (layout === valid) return valid;
-    }
-    
-    // If no exact match, try to find a partial match
-    if (layout.includes('sleeper') && layout.includes('seater')) {
-      return "seater-sleeper";
-    } else if (layout.includes('sleeper')) {
-      return "2+1-sleeper-seater";
-    } else if (layout.includes('seater')) {
-      return "all-seater";
-    } else if (layout.includes('tilt')) {
-      return "tilted-sleeper";
-    }
-    
-    // Default fallback
-    return "2+1";
-  };
+
+  
+  
+
   
   const isAdjacentToFemaleBookedSeat = (seat: Seat): boolean => {
     const seatNum = seat.number;
