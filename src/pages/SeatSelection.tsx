@@ -156,76 +156,15 @@ const SeatSelectionPage = () => {
     }
   };
   
-
-  
-  
-
   
   const isAdjacentToFemaleBookedSeat = (seat: Seat): boolean => {
-    const seatNum = seat.number;
-    const deckPrefix = seatNum.substring(0, 1);
-    const numPart = parseInt(seatNum.substring(1));
-    
-    let seatCol = 0;
-    
-    if (currentBus?.layout === "all-seater") {
-      seatCol = (numPart - 1) % 12;
-    } else if (currentBus?.layout === "2+1-sleeper-seater" || currentBus?.layout === "seater-sleeper") {
-      const rowNum = Math.floor((numPart - 1) / 
-        (numPart <= 24 ? 12 : 6));
-      seatCol = rowNum < 2 ? (numPart - 1) % 12 : (numPart - 1) % 6;
-    } else {
-      const effectiveNum = numPart > 12 ? numPart - 6 : numPart;
-      seatCol = (effectiveNum - 1) % 6;
-    }
-    
-    const rowNum = Math.floor((numPart - 1) / 
-      (currentBus?.layout === "all-seater" ? 12 : 
-       (currentBus?.layout === "2+1-sleeper-seater" || currentBus?.layout === "seater-sleeper") ? 
-       (numPart <= 24 ? 12 : 6) : 6));
-    
-    if (rowNum >= 2) {
-      return false;
-    }
-    
-    return availableSeats
-      .filter(s => {
-        if (s.status !== "female_booked" || s.deck !== seat.deck) {
-          return false;
-        }
-        
-        const femaleNum = s.number;
-        const femaleDeckPrefix = femaleNum.substring(0, 1);
-        const femaleNumPart = parseInt(femaleNum.substring(1));
-        
-        if (deckPrefix !== femaleDeckPrefix) {
-          return false;
-        }
-        
-        let femaleCol = 0;
-        if (currentBus?.layout === "all-seater") {
-          femaleCol = (femaleNumPart - 1) % 12;
-        } else if (currentBus?.layout === "2+1-sleeper-seater" || currentBus?.layout === "seater-sleeper") {
-          const femaleRow = Math.floor((femaleNumPart - 1) / 
-            (femaleNumPart <= 24 ? 12 : 6));
-          femaleCol = femaleRow < 2 ? (femaleNumPart - 1) % 12 : (femaleNumPart - 1) % 6;
-        } else {
-          const effectiveFemaleNum = femaleNumPart > 12 ? femaleNumPart - 6 : femaleNumPart;
-          femaleCol = (effectiveFemaleNum - 1) % 6;
-        }
-        
-        const femaleRow = Math.floor((femaleNumPart - 1) / 
-          (currentBus?.layout === "all-seater" ? 12 : 
-          (currentBus?.layout === "2+1-sleeper-seater" || currentBus?.layout === "seater-sleeper") ? 
-          (femaleNumPart <= 24 ? 12 : 6) : 6));
-        
-        if (femaleRow >= 2) {
-          return false;
-        }
-        
-        return seatCol === femaleCol && rowNum < 2 && femaleRow < 2;
-      }).length > 0;
+   if (seat.available && seat.seat_res_type === 'Reserved_for_female') {
+    return true;
+   }
+   return seat.available && seat.is_ladies_seat;
   };
+
+
   
   const handleSeatSelect = (seat: Seat) => {
     if (selectedSeats.some(s => s.id === seat.id)) {
