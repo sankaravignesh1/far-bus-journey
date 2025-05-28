@@ -7,7 +7,6 @@ export interface Bus {
   id: string;
   name: string;
   type: string;
-  category: string;
   departureTime: string;
   arrivalTime: string;
   duration: string;
@@ -15,7 +14,7 @@ export interface Bus {
   singleSeats: number; // Added for single seats count
   fare: number;
   amenities: string[];
-  layout: "2+1" | "2+1-sleeper-seater" | "seater-sleeper" | "tilted-sleeper" | "all-seater";
+  
 }
 
 export interface Seat {
