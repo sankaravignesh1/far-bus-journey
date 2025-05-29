@@ -38,12 +38,12 @@ export const CityService = {
 
 // Route Service
 export const RouteService = {
-  async getRoute(fromCityId: string, toCityId: string) {
+  async getRoute(fromCity: string, toCity: string) {
     const { data, error } = await supabase
       .from('routes')
       .select('*')
-      .eq('from_city_id', fromCityId)
-      .eq('to_city_id', toCityId)
+      .eq('from_city_name', fromCity)
+      .eq('to_city_name', toCity)
       .single();
       
     if (error) {
