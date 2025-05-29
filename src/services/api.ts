@@ -42,8 +42,8 @@ export const RouteService = {
     const { data, error } = await supabase
       .from('routes')
       .select('*')
-      .eq('from_city_name', fromCity)
-      .eq('to_city_name', toCity)
+      .ilike('from_city_name', fromCity)
+      .ilike('to_city_name', toCity)
       .single();
       
     if (error) {
