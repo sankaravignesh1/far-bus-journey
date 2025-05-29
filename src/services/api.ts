@@ -35,6 +35,21 @@ export const CityService = {
     return data || [];
   }
 };
+// Get city id by name (case-insensitive)
+async function getCityByName(cityName: string) {
+  const { data, error } = await supabase
+    .from('cities')
+    .select('city_id')
+    .ilike('name', cityName.trim()); // Case-insensitive
+
+  if (error) throw new Error(error.message || 'DB error');
+  if (!data || data.length === 0) return null; // Not found
+  return data[0];
+}
+
+
+
+
 
 // Route Service
 export const RouteService = {
