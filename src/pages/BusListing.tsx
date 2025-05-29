@@ -69,7 +69,10 @@ const BusListing = () => {
         setError(null);
 
         // First get the route ID
-        const route = await RouteService.getRoute(fromCity, toCity);
+        const fromcityID= await CityIdService.getCityID(fromCity);
+        const tocityID= await CityIdService.getCityID(toCity);
+        
+        const route = await RouteService.getRoute(fromcityID, tocityID);
         
         if (!route) {
           setError(`No routes found from ${fromCity} to ${toCity}`);
