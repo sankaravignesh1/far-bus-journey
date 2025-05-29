@@ -54,12 +54,12 @@ export const CityIdService= {
 
 // Route Service
 export const RouteService = {
-  async getRoute(fromCity: string, toCity: string) {
+  async getRoute(fromCityId: string, toCityId: string) {
     const { data, error } = await supabase
       .from('routes')
       .select('*')
-      .eq('from_city_name', fromCity.trim())
-      .eq('to_city_name', toCity.trim())
+      .eq('from_city_id', fromCityId)
+      .eq('to_city_id', toCityId)
       .single();
       
     if (error) {
