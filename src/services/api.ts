@@ -45,7 +45,7 @@ export const CityIdService= {
   
   if (error) throw new Error(error.message || 'DB error');
   if (!data || data.length === 0) return null; // Not found
-  return data[0];
+  return data;
  }
 };
 
