@@ -95,8 +95,7 @@ const BusListing = () => {
           id: bus.bus_id,
           name: bus.operator_name,
           type: bus.bus_type,
-          status: seat.available ? 'available' : 'booked',
-          position: { x: seat.x, y: seat.y, z: seat.z },
+          
           departureTime: bus.departure_time ? bus.departure_time.substring(0, 5) : '00:00',
           arrivalTime: bus.arrival_time ? bus.arrival_time.substring(0, 5) : '00:00',
           duration: bus.duration,
