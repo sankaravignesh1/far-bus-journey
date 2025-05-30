@@ -11,7 +11,7 @@ import {
   AccordionItem, 
   AccordionTrigger 
 } from '@/components/ui/accordion';
-import { RouteService, BusService } from '../services/api';
+import { CityIdService, RouteService, BusService } from '../services/api';
 import { Bus } from '../types';
 
 const BusListing = () => {
