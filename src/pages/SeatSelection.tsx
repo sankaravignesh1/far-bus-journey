@@ -73,12 +73,12 @@ const SeatSelectionPage = () => {
         id: busDetails.bus_id,
         name: busDetails.operator_name,
         type: busDetails.bus_type,
-        category: busDetails.bus_category || '',
+        
         departureTime: busDetails.departure_time ? busDetails.departure_time.substring(0, 5) : '00:00',
         arrivalTime: busDetails.arrival_time ? busDetails.arrival_time.substring(0, 5) : '00:00',
-        duration: busDetails.duration || '',
-        availableSeats: busDetails.available_seats || 0,
-        singleSeats: busDetails.singleseats_available || 0,
+        duration: busDetails.duration,
+        availableSeats: busDetails.available_seats,
+        singleSeats: busDetails.singleseats_available,
         fare: busDetails.starting_fare,
         amenities: busDetails.amenities ? (typeof busDetails.amenities === 'string' ? JSON.parse(busDetails.amenities) : busDetails.amenities) : [],
         // Convert the layout string to one of the valid types
@@ -274,11 +274,7 @@ const SeatSelectionPage = () => {
           <h1 className="text-2xl font-serif mb-4">{currentBus?.name}</h1>
           <div className="flex flex-wrap gap-3">
             <div className="px-2 py-1 bg-far-cream text-far-black/70 text-sm rounded">{currentBus?.type}</div>
-            <div className="px-2 py-1 bg-far-cream text-far-black/70 text-sm rounded">
-              {currentBus?.category === "Seater" && ["2+1-sleeper-seater", "seater-sleeper"].includes(currentBus?.layout || "") 
-                ? "Seater + Sleeper" 
-                : currentBus?.category}
-            </div>
+
             <div className="px-2 py-1 bg-far-cream text-far-black/70 text-sm rounded">
               {currentBus?.departureTime} - {currentBus?.arrivalTime}
             </div>
@@ -292,8 +288,8 @@ const SeatSelectionPage = () => {
               seats={availableSeats}
               selectedSeats={selectedSeats}
               onSelectSeat={handleSeatSelect}
-              busType={currentBus?.category || ''}
-              busLayout={currentBus?.layout || '2+1'}
+              busType={currentBus?.type}
+              busLayout={currentBus?.layout || 'delete this layout'}
               maxLowerRow={maxLowerRow}
               maxLowerColumn={maxLowerColumn}
               maxUpperRow={maxUpperRow}
