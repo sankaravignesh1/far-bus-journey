@@ -21,20 +21,19 @@ export interface Seat {
   id: string;
   number: string;  // Format: DL1-DL12, DU1-DU12 (Double seats), SL1-SL6, SU1-SU6 (Single seats)
   type: string;
-  status: "available" | "booked" | "female_booked" | "selected";
-  position: "single" | "double" | "tilted"; // Updated to handle different position types
-  deck: "lower" | "upper";
+
+  deck: string;
   gender?: "male" | "female";
   // Additional properties
-  available?: boolean;
+  available: boolean;
   is_ladies_seat?: boolean;
   requiresFemale?: boolean;
   requiresMale?: boolean;
-  x?: number;
-  y?: number;
-  z?: number;
-  width?: number;
-  height?: number;
+  x: number;
+  y: number;
+  z: number;
+  width: number;
+  height: number;
   original_price?: number;
   discounted_price?: number;
   seat_res_type?: string;
