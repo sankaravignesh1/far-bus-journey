@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 // City Service
@@ -35,6 +34,7 @@ export const CityService = {
     return data || [];
   }
 };
+
 // Get city id by name (case-insensitive)
 export const CityIdService= {
  async getCityID(cityName: string) {
@@ -48,9 +48,6 @@ export const CityIdService= {
   return data;
  }
 };
-
-
-
 
 // Route Service
 export const RouteService = {
@@ -110,8 +107,8 @@ export const BusService = {
     }
     
     return data;
-  },
-
+  }
+};
 
 // Seat Service
 export const SeatService = {
@@ -130,8 +127,8 @@ export const SeatService = {
     
     console.log(`Found ${data?.length || 0} seats for bus ${busId}`);
     return data || [];
-  },
-
+  }
+};
 
 // BoardingPoint Service
 export const BoardingPointService = {
@@ -141,7 +138,6 @@ export const BoardingPointService = {
       .from('boarding_points')
       .select('*')
       .eq('bus_id', busId)
-      .eq('route_id', routeId)
       .order('b_time', { ascending: true });
       
     if (error) {
@@ -162,7 +158,6 @@ export const DroppingPointService = {
       .from('dropping_points')
       .select('*')
       .eq('bus_id', busId)
-      .eq('route_id', routeId)
       .order('d_time', { ascending: true });
       
     if (error) {
@@ -340,4 +335,3 @@ export const CouponService = {
     };
   }
 };
-

@@ -331,9 +331,9 @@ export type Database = {
           seat_type: string | null
           updated_at: string | null
           width: number
-          x_pos: number
-          y_pos: number
-          z_pos: number
+          x: number
+          y: number
+          z: number
         }
         Insert: {
           available?: boolean | null
@@ -364,9 +364,9 @@ export type Database = {
           seat_type?: string | null
           updated_at?: string | null
           width?: number
-          x_pos: number
-          y_pos: number
-          z_pos: number
+          x: number
+          y: number
+          z: number
         }
         Update: {
           available?: boolean | null
@@ -397,9 +397,9 @@ export type Database = {
           seat_type?: string | null
           updated_at?: string | null
           width?: number
-          x_pos?: number
-          y_pos?: number
-          z_pos?: number
+          x?: number
+          y?: number
+          z?: number
         }
         Relationships: [
           {
