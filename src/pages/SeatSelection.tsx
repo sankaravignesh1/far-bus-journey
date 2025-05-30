@@ -105,7 +105,8 @@ const SeatSelectionPage = () => {
           available: seat.available,
           is_ladies_seat: seat.is_ladies_seat || false,
           is_double_berth: seat.is_double_berth || false, 
-          
+          status: seat.available ? 'available' : 'booked',
+          position: { x: seat.x, y: seat.y, z: seat.z },
           deck: seat.deck || "lower",
           x: seat.x,
           y: seat.y,
