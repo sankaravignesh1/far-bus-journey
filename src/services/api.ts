@@ -73,11 +73,11 @@ export const BusService = {
   async searchBuses(fromCity: string, toCity: string, routeId: string, journeyDate: string) {
     const { data, error } = await supabase
       .from('bus_list')
-      .select(`*')
+      .select('*')
        
       .eq('route_id', routeId)
-      .eq('from_city', fromCity)
-      .eq('to_city', toCity)
+      .ilike('from_city', fromCity)
+      .ilike('to_city', toCity)
       .eq('journey_date', journeyDate);
       
     if (error) {
@@ -91,7 +91,7 @@ export const BusService = {
   async getBusDetails(busId: string, journeyDate: string) {
     const { data, error } = await supabase
       .from('bus_list')
-      .select(`*')
+      .select('*')
       
       .eq('bus_id', busId)
       .eq('journey_date', journeyDate)
