@@ -289,7 +289,7 @@ const SeatSelectionPage = () => {
               selectedSeats={selectedSeats}
               onSelectSeat={handleSeatSelect}
               busType={currentBus?.type}
-              busLayout={currentBus?.layout || 'delete this layout'}
+              
               maxLowerRow={maxLowerRow}
               maxLowerColumn={maxLowerColumn}
               maxUpperRow={maxUpperRow}
