@@ -69,9 +69,16 @@ const BusListing = () => {
         setError(null);
 
         // First get the route ID
-        const fromcityID= await CityIdService.getCityID(fromCity);
-        const tocityID= await CityIdService.getCityID(toCity);
+        const fromCityData= await CityIdService.getCityID(fromCity);
+        const toCityData= await CityIdService.getCityID(toCity);
+        if (!fromCityData || !toCityData || fromCityData.length === 0 || toCityData.length === 0) {
+           setError(`Invalid city name: ${!fromCityData ? fromCity : toCity}`);
+           setLoading(false);
+           return;
+        } 
         
+        const fromcityID = fromCityData[0].city_id;
+        const tocityID = toCityData[0].city_id;
         const route = await RouteService.getRoute(fromcityID, tocityID);
         
         if (!route) {
