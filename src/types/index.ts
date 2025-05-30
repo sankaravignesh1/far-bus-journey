@@ -21,7 +21,8 @@ export interface Seat {
   id: string;
   number: string;  // Format: DL1-DL12, DU1-DU12 (Double seats), SL1-SL6, SU1-SU6 (Single seats)
   type: string;
-
+  status: string;
+  position: { x: number; y: number; z: number };
   deck: string;
   gender?: "male" | "female";
   // Additional properties
