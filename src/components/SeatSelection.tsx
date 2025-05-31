@@ -90,8 +90,8 @@ const SeatSelection: React.FC<SeatSelectionProps> = ({
               const positionStyle = {
                 top: seat.y * (seatSize + seatGap),
                 left: seat.x * (seatSize + seatGap),
-                height: seat.height * seatSize + (seat.height - 1) * seatGap,
-                width: seat.width * seatSize + (seat.width - 1) * seatGap,
+                height: seat.width * seatSize + (seat.width - 1) * seatGap,
+                width: seat.height * seatSize + (seat.height - 1) * seatGap,
               };
               
               const seatStatus = getSeatStatus(seat);
