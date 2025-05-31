@@ -46,7 +46,7 @@ const BusList: React.FC<BusListProps> = ({ buses, journeyDate }) => {
     // Apply AC/Non-AC filter
     const typeMatch = 
       (filters.ac && bus.type.toLowerCase().includes('ac') && !bus.type.toLowerCase().includes('non-ac')) ||
-      (filters.nonAc && bus.type.toLowerCase().includes('non-ac')) ||
+      (filters.nonAc && bus.type.toLowerCase().includes('non')) ||
       (!filters.ac && !filters.nonAc);
     
     // Apply Sleeper/Seater filter
